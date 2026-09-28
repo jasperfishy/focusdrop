@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FocusDrop</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #1a1d24;
+    --panel-2: #22262f;
+    --text: #e8e9ed;
+    --text-dim: #9099a8;
+    --accent: #6ee7b7;
+    --accent-text: #0b1210;
+    --danger: #f87171;
+    --danger-text: #2a0b0b;
+    --warn: #fbbf24;
+    --warn-text: #241c02;
+    --border: #2a2e38;
+    --radius: 14px;
+    --shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f7f9;
+    --panel: #ffffff;
+    --panel-2: #f0f1f4;
+    --text: #1c1f26;
+    --text-dim: #6b7280;
+    --accent: #10b981;
+    --accent-text: #ffffff;
+    --danger: #ef4444;
+    --danger-text: #ffffff;
+    --warn: #d97706;
+    --warn-text: #ffffff;
+    --border: #e2e4e9;
+    --shadow: 0 8px 24px rgba(20,20,30,0.08);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 60px;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .wrap { width: 100%; max-width: 640px; position: relative; }
+
+  header {
+    text-align: center;
+    margin-bottom: 22px;
+    position: relative;
+  }
+  header h1 {
+    font-size: 1.55rem;
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+  }
+  header p {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin: 0;
+  }
+  .header-tools {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    gap: 6px;
+  }
+  .icon-btn {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  }
+  .icon-btn:hover { color: var(--text); border-color: var(--text-dim); }
+  .icon-btn:active { transform: scale(0.93); }
+
+  .capture-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+    position: relative;
+    transition: background 0.25s ease, border-color 0.25s ease;
+  }
+  .capture-box input {
+    flex: 1;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 1.02rem;
+    outline: none;
+    transition: border-color 0.15s ease, background 0.25s ease;
+  }
+  .capture-box input:focus { border-color: var(--accent); }
+  .capture-box button {
+    background: var(--accent);
+    color: var(--accent-text);
+    border: none;
+    border-radius: 10px;
+    padding: 0 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform 0.1s ease, opacity 0.15s ease;
+  }
+  .capture-box button:active { transform: scale(0.96); }
+
+  /* ghost of dropped text flying toward the corner icon, confirming capture
+     without a toast demanding attention */
+  .drop-ghost {
+    position: absolute;
+    left: 30px;
+    top: 26px;
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    pointer-events: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80%;
+    opacity: 0;
+  }
+  .drop-ghost.fly {
+    animation: dropFly 0.55s cubic-bezier(.3,.6,.4,1) forwards;
+  }
+  @keyframes dropFly {
+    0%   { opacity: 0.9; transform: translate(0,0) scale(1); }
+    70%  { opacity: 0.4; transform: translate(220px,-18px) scale(0.55); }
+    100% { opacity: 0;   transform: translate(260px,-22px) scale(0.4); }
+  }
+
+  .stats-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .stats-bar span {
+    background: var(--panel);
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  .surface-stage {
+    position: relative;
+    min-height: 180px;
+    margin-bottom: 20px;
+  }
+  .surface-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 22px;
+    text-align: center;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: translateY(6px);
+    animation: cardIn 0.3s ease forwards;
+  }
+  .surface-card.leaving {
+    animation: cardOut 0.22s ease forwards;
+  }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes cardOut {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-6px); }
+  }
+
+  .surface-card .prompt-label {
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+  }
+  .surface-card .item-text {
+    font-size: 1.3rem;
+    line-height: 1.45;
+    word-break: break-word;
+    font-weight: 500;
+  }
+  .surface-card .item-meta {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  .surface-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .surface-actions button {
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s ease, opacity 0.15s ease;
+  }
+  .surface-actions button:active { transform: scale(0.95); }
+  .btn-done { background: var(--accent); color: var(--accent-text); }
+  .btn-snooze { background: var(--warn); color: var(--warn-text); }
+  .btn-drop { background: var(--danger); color: var(--danger-text); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border) !important;
+  }
+
+  /* checkmark burst shown briefly on "Did it" before the card transitions out */
+  .check-burst {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    background: var(--panel);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    opacity: 0;
+  }
+  .check-burst.show { animation: burstShow 0.5s ease forwards; }
+  @keyframes burstShow {
+    0%   { opacity: 0; }
+    15%  { opacity: 1; }
+    85%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  .check-burst svg { width: 56px; height: 56px; }
+  .check-burst circle {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 4;
+    stroke-dasharray: 151;
+    stroke-dashoffset: 151;
+    animation: circleDraw 0.4s ease forwards;
+  }
+  .check-burst path {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 30;
+    stroke-dashoffset: 30;
+    animation: checkDraw 0.25s ease 0.3s forwards;
+  }
+  @keyframes circleDraw { to { stroke-dashoffset: 0; } }
+  @keyframes checkDraw { to { stroke-dashoffset: 0; } }
+
+  .empty-state {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 20px 10px;
+    font-size: 0.95rem;
+  }
+
+  .section-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    margin: 22px 0 10px;
+    user-select: none;
+  }
+  .section-toggle .label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+  }
+  .section-toggle .chevron {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    transition: transform 0.2s ease;
+  }
+  .section-toggle.open .chevron { transform: rotate(90deg); }
+
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+    max-height: 2000px;
+    transition: max-height 0.3s ease;
+  }
+  .list.collapsed { max-height: 0; }
+
+  .list-item {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+  }
+  .list-item .li-text { flex: 1; word-break: break-word; }
+  .list-item .li-age { color: var(--text-dim); font-size: 0.75rem; white-space: nowrap; }
+  .list-item button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  footer {
+    margin-top: 30px;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    padding: 10px 12px 10px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 50;
+  }
+  .toast.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(-4px); }
+  .toast button {
+    background: var(--accent);
+    color: var(--accent-text);
+    border: none;
+    border-radius: 7px;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* overlay panels: settings + stats */
+  .overlay-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 60px 16px;
+    z-index: 100;
+  }
+  .overlay-backdrop.show { display: flex; }
+  .overlay-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: var(--shadow);
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .overlay-panel h2 {
+    margin: 0 0 16px;
+    font-size: 1.1rem;
+  }
+  .overlay-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+    gap: 10px;
+  }
+  .overlay-row:last-child { border-bottom: none; }
+  .overlay-row .row-label { color: var(--text); }
+  .overlay-row .row-sub { color: var(--text-dim); font-size: 0.78rem; margin-top: 2px; }
+  .overlay-actions { display: flex; gap: 8px; }
+  .overlay-btn {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .overlay-btn.primary { background: var(--accent); color: var(--accent-text); border: none; font-weight: 600; }
+  .overlay-btn.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+  .overlay-close {
+    display: block;
+    margin: 18px auto 0;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.82rem;
+  }
+  .theme-toggle-row {
+    display: flex;
+    gap: 8px;
+  }
+  .theme-pill {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.82rem;
+  }
+  .theme-pill.active {
+    background: var(--accent);
+    color: var(--accent-text);
+    border-color: transparent;
+    font-weight: 600;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .stat-tile {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+  .stat-tile .stat-num {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .stat-tile .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .stat-longlived {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  .import-input { display: none; }
+
+  @media (max-width: 460px) {
+    .header-tools { position: static; justify-content: center; margin-top: 10px; }
+    header { display: flex; flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>FocusDrop</h1>
+    <p>Drop it. Don't decide. It'll come back around.</p>
+    <div class="header-tools">
+      <button class="icon-btn" id="statsIconBtn" title="Stats" aria-label="Stats">📊</button>
+      <button class="icon-btn" id="settingsIconBtn" title="Settings" aria-label="Settings">⚙️</button>
+    </div>
+  </header>
+
+  <div class="capture-box">
+    <input id="captureInput" type="text" placeholder="Type a thought, task, idea — press Enter" autocomplete="off">
+    <button id="captureBtn">Drop</button>
+    <div class="drop-ghost" id="dropGhost"></div>
+  </div>
+
+  <div class="stats-bar" id="statsBar"></div>
+
+  <div class="surface-stage" id="surfaceStage"></div>
+
+  <div class="section-toggle" id="backlogToggle" style="display:none;">
+    <span class="label">Everything else</span>
+    <span class="chevron">▸</span>
+  </div>
+  <div class="list collapsed" id="backlogList"></div>
+
+  <footer>Stored locally in this browser only. Nothing leaves your device.</footer>
+</div>
+
+<div class="toast" id="toast">
+  <span id="toastMsg"></span>
+</div>
+
+<!-- Settings overlay -->
+<div class="overlay-backdrop" id="settingsBackdrop">
+  <div class="overlay-panel">
+    <h2>Settings</h2>
+
+    <div class="overlay-row">
+      <div>
+        <div class="row-label">Appearance</div>
+      </div>
+    </div>
+    <div class="theme-toggle-row" style="margin-bottom:14px;">
+      <div class="theme-pill" id="themeDark">Dark</div>
+      <div class="theme-pill" id="themeLight">Light</div>
+      <div class="theme-pill" id="themeSystem">System</div>
+    </div>
+
+    <div class="overlay-row">
+      <div>
+        <div class="row-label">Export data</div>
+        <div class="row-sub">Save everything as a JSON file</div>
+      </div>
+      <div class="overlay-actions">
+        <button class="overlay-btn primary" id="exportBtn">Export</button>
+      </div>
+    </div>
+
+    <div class="overlay-row" id="importRow">
+      <div>
+        <div class="row-label">Import data</div>
+        <div class="row-sub" id="importSub">Merge items from a FocusDrop export</div>
+      </div>
+      <div class="overlay-actions" id="importActions">
+        <button class="overlay-btn" id="importBtn">Import</button>
+      </div>
+    </div>
+    <input type="file" id="importFile" class="import-input" accept="application/json">
+
+    <div class="overlay-row">
+      <div>
+        <div class="row-label">Reset all data</div>
+        <div class="row-sub">Deletes everything on this device</div>
+      </div>
+      <div class="overlay-actions">
+        <button class="overlay-btn danger" id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <button class="overlay-close" id="settingsClose">Close</button>
+  </div>
+</div>
+
+<!-- Stats overlay -->
+<div class="overlay-backdrop" id="statsBackdrop">
+  <div class="overlay-panel">
+    <h2>Stats</h2>
+    <div class="stat-grid" id="statGrid"></div>
+    <div class="stat-longlived" id="statLongLived"></div>
+    <button class="overlay-close" id="statsClose">Close</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "focusdrop_items_v1";
+  var STORAGE_BACKUP_KEY = "focusdrop_items_v1_corrupt_backup";
+  var THEME_KEY = "focusdrop_theme_v1";
+  var items = [];
+  var undoStack = []; // {item, prevSnapshot, action}
+
+  // ---------- storage (hardened) ----------
+  function safeParse(raw) {
+    try {
+      var parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return null;
+      // basic shape validation on first element if present
+      return parsed;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function load() {
+    var raw = null;
+    try {
+      raw = localStorage.getItem(STORAGE_KEY);
+    } catch (e) {
+      items = [];
+      showToast("Storage is unavailable in this browser — working in-memory only, nothing will persist.");
+      return;
+    }
+    if (!raw) { items = []; return; }
+    var parsed = safeParse(raw);
+    if (parsed === null) {
+      // Corrupted data: never silently discard. Preserve the raw blob
+      // under a backup key and flag it, rather than resetting to empty.
+      try {
+        localStorage.setItem(STORAGE_BACKUP_KEY, raw);
+      } catch (e) { /* best effort */ }
+      items = [];
+      showToast("Saved data looked corrupted — backed up the raw file, starting fresh. Check Settings.");
+      return;
+    }
+    items = parsed;
+  }
+
+  function save() {
+    var payload;
+    try {
+      payload = JSON.stringify(items);
+    } catch (e) {
+      showToast("Couldn't prepare data to save.");
+      return false;
+    }
+    try {
+      localStorage.setItem(STORAGE_KEY, payload);
+    } catch (e) {
+      if (e && (e.name === "QuotaExceededError" || e.code === 22)) {
+        showToast("Storage is full — export your data from Settings to back it up.");
+      } else {
+        showToast("Couldn't save changes — storage unavailable.");
+      }
+      return false;
+    }
+    // verify write actually landed
+    try {
+      var check = localStorage.getItem(STORAGE_KEY);
+      if (check !== payload) {
+        showToast("Save may not have completed — check Settings > Export to back up.");
+        return false;
+      }
+    } catch (e) { /* verification best-effort */ }
+    return true;
+  }
+
+  // ---------- theme ----------
+  function applyTheme(mode) {
+    var root = document.documentElement;
+    if (mode === "system") {
+      root.removeAttribute("data-theme");
+    } else {
+      root.setAttribute("data-theme", mode);
+    }
+    document.querySelectorAll(".theme-pill").forEach(function (p) { p.classList.remove("active"); });
+    var map = { dark: "themeDark", light: "themeLight", system: "themeSystem" };
+    var btn = document.getElementById(map[mode]);
+    if (btn) btn.classList.add("active");
+  }
+
+  function loadTheme() {
+    var mode = "system";
+    try {
+      mode = localStorage.getItem(THEME_KEY) || "system";
+    } catch (e) {}
+    applyTheme(mode);
+  }
+
+  function setTheme(mode) {
+    try { localStorage.setItem(THEME_KEY, mode); } catch (e) {}
+    applyTheme(mode);
+  }
+
+  // ---------- model ----------
+  function uid() {
+    return "i" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  function addItem(text) {
+    text = text.trim();
+    if (!text) return null;
+    var now = Date.now();
+    var newItem = {
+      id: uid(),
+      text: text,
+      createdAt: now,
+      lastSeenAt: null,
+      snoozeUntil: null,
+      seenCount: 0,
+      status: "open"
+    };
+    items.push(newItem);
+    save();
+    return newItem;
+  }
+
+  function daysSince(ts) {
+    return (Date.now() - ts) / (1000 * 60 * 60 * 24);
+  }
+
+  function eligibleItems() {
+    var now = Date.now();
+    return items.filter(function (it) {
+      if (it.status !== "open") return false;
+      if (it.snoozeUntil && it.snoozeUntil > now) return false;
+      return true;
+    });
+  }
+
+  // Weighted pick blended with pure randomness (70% weighted / 30% uniform
+  // random) so aging genuinely boosts old items' odds without the app
+  // feeling like it's always just showing "the oldest thing" on repeat.
+  var WEIGHTED_BLEND = 0.7;
+
+  function pickSurfaceItem() {
+    var pool = eligibleItems();
+    if (pool.length === 0) return null;
+    if (pool.length === 1) return pool[0];
+
+    if (Math.random() > WEIGHTED_BLEND) {
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    var weights = pool.map(function (it) {
+      var age = daysSince(it.lastSeenAt || it.createdAt);
+      var ageWeight = 1 + Math.min(age, 20); // softened cap vs earlier version
+      var freshnessBoost = it.seenCount === 0 ? 2 : 1;
+      return ageWeight * freshnessBoost;
+    });
+    var total = weights.reduce(function (a, b) { return a + b; }, 0);
+    var r = Math.random() * total;
+    for (var i = 0; i < pool.length; i++) {
+      r -= weights[i];
+      if (r <= 0) return pool[i];
+    }
+    return pool[pool.length - 1];
+  }
+
+  var currentSurfaced = null;
+
+  function refreshSurfaced() {
+    currentSurfaced = pickSurfaceItem();
+  }
+
+  function markSeen(item) {
+    item.lastSeenAt = Date.now();
+    item.seenCount += 1;
+  }
+
+  function snapshotItem(item) {
+    return JSON.parse(JSON.stringify(item));
+  }
+
+  function applyChange(item, changes) {
+    Object.keys(changes).forEach(function (k) { item[k] = changes[k]; });
+  }
+
+  function markDone(item, opts) {
+    var prev = snapshotItem(item);
+    applyChange(item, { status: "done", completedAt: Date.now() });
+    save();
+    pushUndo({ itemId: item.id, prev: prev, label: "Marked done" });
+    if (!(opts && opts.skipAnimation)) {
+      playCheckBurst(function () {
+        currentSurfaced = null;
+        refreshSurfaced();
+        render();
+      });
+    } else {
+      currentSurfaced = null;
+      refreshSurfaced();
+      render();
+    }
+  }
+
+  function markDropped(item) {
+    var prev = snapshotItem(item);
+    applyChange(item, { status: "dropped", droppedAt: Date.now() });
+    save();
+    pushUndo({ itemId: item.id, prev: prev, label: "Dropped" });
+    currentSurfaced = null;
+    refreshSurfaced();
+    render();
+  }
+
+  function snoozeItem(item, hours) {
+    var prev = snapshotItem(item);
+    markSeen(item);
+    applyChange(item, { snoozeUntil: Date.now() + hours * 60 * 60 * 1000 });
+    save();
+    pushUndo({ itemId: item.id, prev: prev, label: "Snoozed " + hours + "h" });
+    currentSurfaced = null;
+    refreshSurfaced();
+    render();
+  }
+
+  function skipSurfaced() {
+    currentSurfaced = null;
+    refreshSurfaced();
+    render();
+  }
+
+  // ---------- undo ----------
+  var undoTimer = null;
+
+  function pushUndo(entry) {
+    undoStack.push(entry);
+    showUndoToast(entry.label);
+  }
+
+  function performUndo() {
+    var entry = undoStack.pop();
+    if (!entry) return;
+    var item = items.find(function (i) { return i.id === entry.itemId; });
+    if (!item) return;
+    Object.keys(entry.prev).forEach(function (k) { item[k] = entry.prev[k]; });
+    save();
+    currentSurfaced = item;
+    hideToast();
+    render();
+  }
+
+  function showUndoToast(label) {
+    var toast = document.getElementById("toast");
+    var msgEl = document.getElementById("toastMsg");
+    msgEl.innerHTML = "";
+    msgEl.appendChild(document.createTextNode(label + ". "));
+    var undoBtn = document.createElement("button");
+    undoBtn.textContent = "Undo";
+    undoBtn.addEventListener("click", performUndo);
+    msgEl.appendChild(undoBtn);
+    toast.classList.add("show");
+    clearTimeout(undoTimer);
+    undoTimer = setTimeout(hideToast, 5000);
+  }
+
+  function showToast(msg) {
+    var toast = document.getElementById("toast");
+    var msgEl = document.getElementById("toastMsg");
+    msgEl.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(undoTimer);
+    undoTimer = setTimeout(hideToast, 3200);
+  }
+
+  function hideToast() {
+    document.getElementById("toast").classList.remove("show");
+  }
+
+  // ---------- rendering ----------
+  function fmtAge(ts) {
+    var d = daysSince(ts);
+    if (d < 1 / 24) return "just now";
+    if (d < 1) return Math.round(d * 24) + "h ago";
+    if (d < 30) return Math.round(d) + "d ago";
+    return Math.round(d / 30) + "mo ago";
+  }
+
+  function el(tag, attrs, children) {
+    var e = document.createElement(tag);
+    attrs = attrs || {};
+    Object.keys(attrs).forEach(function (k) {
+      if (k === "text") e.textContent = attrs[k];
+      else if (k === "class") e.className = attrs[k];
+      else if (k.indexOf("on") === 0 && typeof attrs[k] === "function") {
+        e.addEventListener(k.slice(2), attrs[k]);
+      } else {
+        e.setAttribute(k, attrs[k]);
+      }
+    });
+    (children || []).forEach(function (c) { if (c) e.appendChild(c); });
+    return e;
+  }
+
+  var backlogOpen = false;
+
+  function render() {
+    renderStats();
+    renderSurface();
+    renderBacklog();
+  }
+
+  function renderStats() {
+    var bar = document.getElementById("statsBar");
+    bar.innerHTML = "";
+    var open = items.filter(function (i) { return i.status === "open"; }).length;
+    var done = items.filter(function (i) { return i.status === "done"; }).length;
+    var dropped = items.filter(function (i) { return i.status === "dropped"; }).length;
+    var snoozed = items.filter(function (i) {
+      return i.status === "open" && i.snoozeUntil && i.snoozeUntil > Date.now();
+    }).length;
+    [
+      open + " open",
+      snoozed + " snoozed",
+      done + " done",
+      dropped + " dropped"
+    ].forEach(function (t) {
+      bar.appendChild(el("span", { text: t }));
+    });
+  }
+
+  function renderSurface() {
+    var stage = document.getElementById("surfaceStage");
+    stage.innerHTML = "";
+
+    if (!currentSurfaced) refreshSurfaced();
+
+    if (!currentSurfaced) {
+      var msg = items.length === 0
+        ? "Nothing dropped yet. Type something above — anything, half-formed is fine."
+        : "Nothing to resurface right now. Everything's snoozed, done, or dropped.";
+      var card = el("div", { class: "surface-card" }, [
+        el("div", { class: "empty-state", text: msg })
+      ]);
+      stage.appendChild(card);
+      return;
+    }
+
+    var it = currentSurfaced;
+    var metaText = "Dropped " + fmtAge(it.createdAt) +
+      (it.seenCount > 0 ? " · seen " + it.seenCount + "×" : " · new");
+
+    var card = el("div", { class: "surface-card", id: "activeCard" }, [
+      el("div", { class: "prompt-label", text: "What about this?" }),
+      el("div", { class: "item-text", text: it.text }),
+      el("div", { class: "item-meta", text: metaText }),
+      el("div", { class: "surface-actions" }, [
+        el("button", { class: "btn-done", text: "Did it", onclick: function () { markDone(it); } }),
+        el("button", { class: "btn-snooze", text: "Still relevant (snooze 8h)", onclick: function () { snoozeItem(it, 8); } }),
+        el("button", { class: "btn-drop", text: "Drop it", onclick: function () { markDropped(it); } }),
+        el("button", { class: "btn-ghost", text: "Skip for now", onclick: skipSurfaced })
+      ])
+    ]);
+    stage.appendChild(card);
+  }
+
+  function playCheckBurst(onDone) {
+    var stage = document.getElementById("surfaceStage");
+    var burst = el("div", { class: "check-burst" }, [
+      (function () {
+        var svgNs = "http://www.w3.org/2000/svg";
+        var svg = document.createElementNS(svgNs, "svg");
+        svg.setAttribute("viewBox", "0 0 56 56");
+        var circle = document.createElementNS(svgNs, "circle");
+        circle.setAttribute("cx", "28"); circle.setAttribute("cy", "28"); circle.setAttribute("r", "24");
+        var path = document.createElementNS(svgNs, "path");
+        path.setAttribute("d", "M17 29 L25 37 L40 20");
+        svg.appendChild(circle);
+        svg.appendChild(path);
+        var wrapper = document.createElement("div");
+        wrapper.appendChild(svg);
+        return wrapper;
+      })()
+    ]);
+    stage.appendChild(burst);
+    requestAnimationFrame(function () { burst.classList.add("show"); });
+    setTimeout(function () {
+      if (onDone) onDone();
+    }, 480);
+  }
+
+  function renderBacklog() {
+    var listEl = document.getElementById("backlogList");
+    var toggleEl = document.getElementById("backlogToggle");
+    listEl.innerHTML = "";
+
+    var open = items.filter(function (i) { return i.status === "open"; });
+    open.sort(function (a, b) {
+      return (a.lastSeenAt || a.createdAt) - (b.lastSeenAt || b.createdAt);
+    });
+
+    if (open.length === 0) {
+      toggleEl.style.display = "none";
+      listEl.classList.add("collapsed");
+      return;
+    }
+    toggleEl.style.display = "flex";
+    toggleEl.querySelector(".label").textContent = "Everything else (" + open.length + ")";
+
+    open.forEach(function (it) {
+      var isSnoozed = it.snoozeUntil && it.snoozeUntil > Date.now();
+      var ageLabel = fmtAge(it.createdAt) + (isSnoozed ? " · snoozed" : "");
+      var row = el("div", { class: "list-item" }, [
+        el("div", { class: "li-text", text: it.text }),
+        el("div", { class: "li-age", text: ageLabel }),
+        el("button", { text: "Drop", onclick: function () { markDropped(it); } })
+      ]);
+      listEl.appendChild(row);
+    });
+
+    listEl.classList.toggle("collapsed", !backlogOpen);
+    toggleEl.classList.toggle("open", backlogOpen);
+  }
+
+  function renderStatsPanel() {
+    var grid = document.getElementById("statGrid");
+    var longLived = document.getElementById("statLongLived");
+    grid.innerHTML = "";
+
+    var done = items.filter(function (i) { return i.status === "done"; }).length;
+    var dropped = items.filter(function (i) { return i.status === "dropped"; }).length;
+    var open = items.filter(function (i) { return i.status === "open"; }).length;
+    var total = items.length;
+
+    [
+      [String(done), "Done"],
+      [String(dropped), "Dropped"],
+      [String(open), "Still open"],
+      [String(total), "Total ever dropped"]
+    ].forEach(function (pair) {
+      grid.appendChild(el("div", { class: "stat-tile" }, [
+        el("div", { class: "stat-num", text: pair[0] }),
+        el("div", { class: "stat-label", text: pair[1] })
+      ]));
+    });
+
+    var openItems = items.filter(function (i) { return i.status === "open"; });
+    if (openItems.length > 0) {
+      var oldest = openItems.reduce(function (a, b) { return a.createdAt < b.createdAt ? a : b; });
+      longLived.textContent = "Longest-lived open item: “" + oldest.text + "” — dropped " + fmtAge(oldest.createdAt) + ".";
+    } else {
+      longLived.textContent = "No open items right now.";
+    }
+  }
+
+  // ---------- wiring ----------
+  function handleCapture() {
+    var input = document.getElementById("captureInput");
+    var val = input.value;
+    if (!val.trim()) return;
+
+    // drop-ghost animation: brief flight toward the corner, confirming
+    // capture without a toast
+    var ghost = document.getElementById("dropGhost");
+    ghost.textContent = val.trim();
+    ghost.classList.remove("fly");
+    void ghost.offsetWidth; // restart animation
+    ghost.classList.add("fly");
+
+    addItem(val);
+    input.value = "";
+    input.focus();
+    render();
+  }
+
+  document.getElementById("captureBtn").addEventListener("click", handleCapture);
+  document.getElementById("captureInput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") handleCapture();
+  });
+
+  document.getElementById("backlogToggle").addEventListener("click", function () {
+    backlogOpen = !backlogOpen;
+    renderBacklog();
+  });
+
+  // settings overlay
+  document.getElementById("settingsIconBtn").addEventListener("click", function () {
+    document.getElementById("settingsBackdrop").classList.add("show");
+  });
+  document.getElementById("settingsClose").addEventListener("click", function () {
+    document.getElementById("settingsBackdrop").classList.remove("show");
+  });
+  document.getElementById("settingsBackdrop").addEventListener("click", function (e) {
+    if (e.target.id === "settingsBackdrop") e.currentTarget.classList.remove("show");
+  });
+
+  // stats overlay
+  document.getElementById("statsIconBtn").addEventListener("click", function () {
+    renderStatsPanel();
+    document.getElementById("statsBackdrop").classList.add("show");
+  });
+  document.getElementById("statsClose").addEventListener("click", function () {
+    document.getElementById("statsBackdrop").classList.remove("show");
+  });
+  document.getElementById("statsBackdrop").addEventListener("click", function (e) {
+    if (e.target.id === "statsBackdrop") e.currentTarget.classList.remove("show");
+  });
+
+  // theme
+  document.getElementById("themeDark").addEventListener("click", function () { setTheme("dark"); });
+  document.getElementById("themeLight").addEventListener("click", function () { setTheme("light"); });
+  document.getElementById("themeSystem").addEventListener("click", function () { setTheme("system"); });
+
+  // export — uses the platform downloads capability when available (the
+  // artifact sandbox blocks plain <a download> / blob-URL saves); falls
+  // back to that older approach only when running outside that sandbox
+  // (e.g. the file opened directly in a browser).
+  var downloadsApi = null;
+  var downloadsApiChecked = false;
+  function getDownloadsApi() {
+    if (downloadsApiChecked) return Promise.resolve(downloadsApi);
+    downloadsApiChecked = true;
+    if (typeof claude === "undefined" || !claude || typeof claude.use !== "function") {
+      return Promise.resolve(null);
+    }
+    return claude.use("downloads").then(function (ns) {
+      downloadsApi = ns;
+      return ns;
+    }).catch(function () { return null; });
+  }
+
+  document.getElementById("exportBtn").addEventListener("click", function () {
+    var data = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), items: items }, null, 2);
+    var filename = "focusdrop-export-" + new Date().toISOString().slice(0, 10) + ".json";
+
+    getDownloadsApi().then(function (downloads) {
+      if (downloads) {
+        downloads.save({ filename: filename, data: data }).then(function (result) {
+          showToast(result.status === "delivered" ? "Exported." : "Saved.");
+        }).catch(function (err) {
+          if (err && err.code === "declined") return; // user said no, don't nag
+          if (err && err.code === "too_large") { showToast("Export is too large to save here."); return; }
+          fallbackDownload();
+        });
+      } else {
+        fallbackDownload();
+      }
+    });
+
+    function fallbackDownload() {
+      try {
+        var blob = new Blob([data], { type: "application/json" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast("Exported.");
+      } catch (e) {
+        showToast("Couldn't export here — try opening FocusDrop as a standalone file.");
+      }
+    }
+  });
+
+  // import — two-step: validate + preview count, then explicit confirm before merging
+  var pendingImport = null;
+
+  function resetImportRow() {
+    pendingImport = null;
+    document.getElementById("importSub").textContent = "Merge items from a FocusDrop export";
+    var actions = document.getElementById("importActions");
+    actions.innerHTML = "";
+    var btn = el("button", { class: "overlay-btn", id: "importBtn", text: "Import" });
+    btn.addEventListener("click", function () { document.getElementById("importFile").click(); });
+    actions.appendChild(btn);
+  }
+
+  document.getElementById("importBtn").addEventListener("click", function () {
+    document.getElementById("importFile").click();
+  });
+
+  document.getElementById("importFile").addEventListener("change", function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      document.getElementById("importFile").value = "";
+      var parsed;
+      try {
+        parsed = JSON.parse(reader.result);
+      } catch (err) {
+        showToast("That file isn't valid JSON — nothing imported.");
+        return;
+      }
+      var incoming = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.items) ? parsed.items : null);
+      if (!incoming) {
+        showToast("That file doesn't look like a FocusDrop export — nothing imported.");
+        return;
+      }
+      // validate shape before touching existing data or showing a count
+      var valid = incoming.every(function (it) {
+        return it && typeof it.text === "string" && typeof it.createdAt === "number";
+      });
+      if (!valid) {
+        showToast("Import file has an unexpected format — nothing imported.");
+        return;
+      }
+      if (incoming.length === 0) {
+        showToast("That file has no items to import.");
+        return;
+      }
+
+      // stage it: show count and require explicit confirm before touching data
+      pendingImport = incoming;
+      document.getElementById("importSub").textContent =
+        incoming.length + " item" + (incoming.length === 1 ? "" : "s") + " found — merge into your existing data?";
+      var actions = document.getElementById("importActions");
+      actions.innerHTML = "";
+      var confirmBtn = el("button", { class: "overlay-btn primary", text: "Confirm merge" });
+      var cancelBtn = el("button", { class: "overlay-btn", text: "Cancel" });
+      confirmBtn.addEventListener("click", function () {
+        var toImport = pendingImport;
+        if (!toImport) return;
+        var existingIds = new Set(items.map(function (i) { return i.id; }));
+        var added = 0;
+        toImport.forEach(function (it) {
+          var id = (it.id && !existingIds.has(it.id)) ? it.id : uid();
+          existingIds.add(id);
+          items.push({
+            id: id,
+            text: it.text,
+            createdAt: it.createdAt,
+            lastSeenAt: it.lastSeenAt || null,
+            snoozeUntil: it.snoozeUntil || null,
+            seenCount: it.seenCount || 0,
+            status: it.status || "open",
+            completedAt: it.completedAt,
+            droppedAt: it.droppedAt
+          });
+          added++;
+        });
+        save();
+        render();
+        showToast("Imported " + added + " item" + (added === 1 ? "" : "s") + " (merged).");
+        resetImportRow();
+      });
+      cancelBtn.addEventListener("click", function () {
+        resetImportRow();
+      });
+      actions.appendChild(confirmBtn);
+      actions.appendChild(cancelBtn);
+    };
+    reader.readAsText(file);
+  });
+
+  // reset
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    if (!confirm("Clear all FocusDrop items? Export first if you want a backup. This can't be undone.")) return;
+    items = [];
+    save();
+    currentSurfaced = null;
+    undoStack = [];
+    render();
+    document.getElementById("settingsBackdrop").classList.remove("show");
+    showToast("Cleared.");
+  });
+
+  // expose a tiny hook for automated testing
+  window.__focusdrop_test_api = {
+    addItem: addItem,
+    getItems: function () { return items; },
+    render: render,
+    pickSurfaceItem: pickSurfaceItem,
+    getCurrentSurfaced: function () { return currentSurfaced; },
+    markDone: function (it) { markDone(it, { skipAnimation: true }); },
+    markDropped: markDropped,
+    snoozeItem: snoozeItem,
+    performUndo: performUndo,
+    getUndoStackLength: function () { return undoStack.length; },
+    setTheme: setTheme,
+    getTheme: function () { try { return localStorage.getItem(THEME_KEY) || "system"; } catch (e) { return "system"; } },
+    corruptStorage: function () { try { localStorage.setItem(STORAGE_KEY, "{not valid json"); } catch (e) {} },
+    getBackupRaw: function () { try { return localStorage.getItem(STORAGE_BACKUP_KEY); } catch (e) { return null; } },
+    _resetForTest: function () {
+      items = []; currentSurfaced = null; undoStack = [];
+      try { localStorage.removeItem(STORAGE_BACKUP_KEY); } catch (e) {}
+    }
+  };
+
+  loadTheme();
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
