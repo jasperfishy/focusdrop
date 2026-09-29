@@ -7,12 +7,18 @@
 <style>
   :root {
     --bg: #0f1115;
+    --bg-grad-1: #131725;
+    --bg-grad-2: #0d1013;
     --panel: #1a1d24;
     --panel-2: #22262f;
     --text: #e8e9ed;
     --text-dim: #9099a8;
     --accent: #6ee7b7;
+    --accent-2: #7dd3fc;
     --accent-text: #0b1210;
+    --accent-2-text: #06222e;
+    --violet: #c4b5fd;
+    --violet-text: #211a3d;
     --danger: #f87171;
     --danger-text: #2a0b0b;
     --warn: #fbbf24;
@@ -20,34 +26,46 @@
     --border: #2a2e38;
     --radius: 14px;
     --shadow: 0 8px 24px rgba(0,0,0,0.35);
+    --shadow-glow: 0 0 0 1px rgba(110,231,183,0.08), 0 10px 32px rgba(110,231,183,0.06);
   }
   :root[data-theme="light"] {
     --bg: #f6f7f9;
+    --bg-grad-1: #eef5f2;
+    --bg-grad-2: #f6f0fa;
     --panel: #ffffff;
     --panel-2: #f0f1f4;
     --text: #1c1f26;
     --text-dim: #6b7280;
     --accent: #10b981;
+    --accent-2: #0ea5e9;
     --accent-text: #ffffff;
+    --accent-2-text: #ffffff;
+    --violet: #8b5cf6;
+    --violet-text: #ffffff;
     --danger: #ef4444;
     --danger-text: #ffffff;
     --warn: #d97706;
     --warn-text: #ffffff;
     --border: #e2e4e9;
     --shadow: 0 8px 24px rgba(20,20,30,0.08);
+    --shadow-glow: 0 0 0 1px rgba(16,185,129,0.08), 0 10px 32px rgba(16,185,129,0.08);
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg);
+    background:
+      radial-gradient(circle at 12% -10%, var(--bg-grad-1) 0%, transparent 48%),
+      radial-gradient(circle at 88% 8%, var(--bg-grad-2) 0%, transparent 42%),
+      var(--bg);
+    background-attachment: fixed;
     color: var(--text);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 24px 16px 60px;
-    transition: background 0.25s ease, color 0.25s ease;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
   .wrap { width: 100%; max-width: 640px; position: relative; }
 
@@ -60,6 +78,11 @@
     font-size: 1.55rem;
     margin: 0 0 4px;
     letter-spacing: -0.02em;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
   }
   header p {
     color: var(--text-dim);
@@ -87,7 +110,7 @@
     font-size: 1rem;
     transition: color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
   }
-  .icon-btn:hover { color: var(--text); border-color: var(--text-dim); }
+  .icon-btn:hover { color: var(--text); border-color: var(--accent-2); }
   .icon-btn:active { transform: scale(0.93); }
 
   .capture-box {
@@ -99,6 +122,7 @@
     display: flex;
     gap: 10px;
     position: relative;
+    box-shadow: var(--shadow-glow);
     transition: background 0.25s ease, border-color 0.25s ease;
   }
   .capture-box input {
@@ -114,7 +138,7 @@
   }
   .capture-box input:focus { border-color: var(--accent); }
   .capture-box button {
-    background: var(--accent);
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
     color: var(--accent-text);
     border: none;
     border-radius: 10px;
@@ -122,7 +146,8 @@
     font-weight: 600;
     font-size: 0.95rem;
     cursor: pointer;
-    transition: transform 0.1s ease, opacity 0.15s ease;
+    transition: transform 0.1s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 4px 14px rgba(110,231,183,0.25);
   }
   .capture-box button:active { transform: scale(0.96); }
 
@@ -223,6 +248,10 @@
     border-radius: 8px;
     border: 1px solid var(--border);
   }
+  .stats-bar span:nth-child(1) { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); color: color-mix(in srgb, var(--accent) 70%, var(--text-dim)); }
+  .stats-bar span:nth-child(2) { border-color: color-mix(in srgb, var(--accent-2) 30%, var(--border)); color: color-mix(in srgb, var(--accent-2) 70%, var(--text-dim)); }
+  .stats-bar span:nth-child(3) { border-color: color-mix(in srgb, var(--warn) 30%, var(--border)); color: color-mix(in srgb, var(--warn) 75%, var(--text-dim)); }
+  .stats-bar span:nth-child(4) { border-color: color-mix(in srgb, var(--violet) 30%, var(--border)); color: color-mix(in srgb, var(--violet) 70%, var(--text-dim)); }
 
   .surface-stage {
     position: relative;
@@ -246,6 +275,20 @@
     opacity: 0;
     transform: translateY(6px);
     animation: cardIn 0.3s ease forwards;
+    box-shadow: var(--shadow-glow);
+  }
+  .surface-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    padding: 1px;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 45%, transparent), color-mix(in srgb, var(--accent-2) 45%, transparent));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.6;
   }
   .surface-card.leaving {
     animation: cardOut 0.22s ease forwards;
@@ -263,7 +306,8 @@
     font-size: 0.74rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--text-dim);
+    color: color-mix(in srgb, var(--accent-2) 65%, var(--text-dim));
+    font-weight: 600;
   }
   .surface-card .item-text {
     font-size: 1.3rem;
@@ -299,6 +343,21 @@
     background: var(--panel-2);
     border: 1px solid var(--border);
     color: var(--text);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .btn-timer:active { transform: scale(0.95); }
+  .just-start-row .btn-timer:nth-child(1) {
+    border-color: color-mix(in srgb, var(--accent-2) 45%, var(--border));
+    color: color-mix(in srgb, var(--accent-2) 80%, var(--text));
+  }
+  .just-start-row .btn-timer:nth-child(2) {
+    border-color: color-mix(in srgb, var(--violet) 45%, var(--border));
+    color: color-mix(in srgb, var(--violet) 80%, var(--text));
   }
   .timer-active-box {
     display: flex;
@@ -332,7 +391,7 @@
     transition: transform 0.1s ease, opacity 0.15s ease;
   }
   .surface-actions button:active { transform: scale(0.95); }
-  .btn-done { background: var(--accent); color: var(--accent-text); }
+  .btn-done { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: var(--accent-text); }
   .btn-snooze { background: var(--warn); color: var(--warn-text); }
   .btn-drop { background: var(--danger); color: var(--danger-text); }
   .btn-ghost {
@@ -530,7 +589,7 @@
     font-size: 0.82rem;
     cursor: pointer;
   }
-  .overlay-btn.primary { background: var(--accent); color: var(--accent-text); border: none; font-weight: 600; }
+  .overlay-btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: var(--accent-text); border: none; font-weight: 600; }
   .overlay-btn.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
   .overlay-close {
     display: block;
@@ -558,7 +617,7 @@
     font-size: 0.82rem;
   }
   .theme-pill.active {
-    background: var(--accent);
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
     color: var(--accent-text);
     border-color: transparent;
     font-weight: 600;
@@ -577,6 +636,10 @@
     padding: 14px;
     text-align: center;
   }
+  .stat-tile:nth-child(1) .stat-num { color: color-mix(in srgb, var(--accent) 80%, var(--text)); }
+  .stat-tile:nth-child(2) .stat-num { color: color-mix(in srgb, var(--accent-2) 80%, var(--text)); }
+  .stat-tile:nth-child(3) .stat-num { color: color-mix(in srgb, var(--violet) 80%, var(--text)); }
+  .stat-tile:nth-child(4) .stat-num { color: color-mix(in srgb, var(--warn) 85%, var(--text)); }
   .stat-tile .stat-num {
     font-size: 1.5rem;
     font-weight: 700;
@@ -596,7 +659,7 @@
     text-align: center;
   }
   .streak-banner {
-    background: var(--panel-2);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, var(--panel-2)), color-mix(in srgb, var(--violet) 10%, var(--panel-2)));
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 12px;
@@ -606,7 +669,10 @@
   .streak-banner .streak-num {
     font-size: 1.6rem;
     font-weight: 700;
-    color: var(--accent);
+    background: linear-gradient(90deg, var(--accent), var(--violet));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
   .streak-banner .streak-label {
     font-size: 0.8rem;
@@ -629,7 +695,7 @@
     cursor: pointer;
     flex-shrink: 0;
   }
-  .switch.on { background: var(--accent); border-color: transparent; }
+  .switch.on { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; }
   .switch .knob {
     position: absolute;
     top: 2px;
