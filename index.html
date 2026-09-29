@@ -126,6 +126,64 @@
   }
   .capture-box button:active { transform: scale(0.96); }
 
+  .capture-extra {
+    max-width: 640px;
+    width: 100%;
+    margin: -12px 0 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .first-step-toggle {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 4px 0;
+  }
+  .first-step-input {
+    max-width: 640px;
+    width: 100%;
+    margin: -10px 0 18px;
+    display: none;
+  }
+  .first-step-input.show { display: block; }
+  .first-step-input input {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    outline: none;
+  }
+  .first-step-input input:focus { border-color: var(--accent); }
+
+  .energy-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    cursor: pointer;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 10px;
+    user-select: none;
+  }
+  .energy-toggle.active {
+    background: var(--warn);
+    color: var(--warn-text);
+    border-color: transparent;
+    font-weight: 600;
+  }
+
   /* ghost of dropped text flying toward the corner icon, confirming capture
      without a toast demanding attention */
   .drop-ghost {
@@ -215,6 +273,47 @@
   }
   .surface-card .item-meta {
     font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  .surface-card .first-step-hint {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    max-width: 90%;
+  }
+  /* Age glow: a very subtle border tint that warms slightly the longer an
+     item has waited, giving a passive sense of time without a due date. */
+  .surface-card.age-warm { border-color: color-mix(in srgb, var(--warn) 35%, var(--border)); }
+  .surface-card.age-hot { border-color: color-mix(in srgb, var(--danger) 40%, var(--border)); }
+
+  .just-start-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn-timer {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .timer-active-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .timer-display {
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .timer-sub {
+    font-size: 0.8rem;
     color: var(--text-dim);
   }
   .surface-actions {
@@ -496,6 +595,52 @@
     color: var(--text-dim);
     text-align: center;
   }
+  .streak-banner {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .streak-banner .streak-num {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .streak-banner .streak-label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .settings-toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .switch {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .switch.on { background: var(--accent); border-color: transparent; }
+  .switch .knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--panel);
+    transition: transform 0.15s ease;
+  }
+  .switch.on .knob { transform: translateX(18px); background: #fff; }
 
   .import-input { display: none; }
 
@@ -521,6 +666,19 @@
     <button id="captureBtn">Drop</button>
     <div class="drop-ghost" id="dropGhost"></div>
   </div>
+
+  <div class="first-step-input" id="firstStepWrap">
+    <input id="firstStepInput" type="text" placeholder="Tiniest first step (optional) — press Enter to attach" autocomplete="off">
+  </div>
+
+  <div class="capture-extra">
+    <button class="first-step-toggle" id="firstStepToggle">+ add a tiny first step</button>
+    <div class="energy-toggle" id="energyToggle" title="Only show quick/easy items while this is on">
+      <span>🔋 Low energy mode</span>
+    </div>
+  </div>
+
+  <div class="streak-banner" id="streakBanner" style="display:none;"></div>
 
   <div class="stats-bar" id="statsBar"></div>
 
@@ -576,6 +734,14 @@
     </div>
     <input type="file" id="importFile" class="import-input" accept="application/json">
 
+    <div class="overlay-row settings-toggle-row">
+      <div>
+        <div class="row-label">Gentle reminders</div>
+        <div class="row-sub" id="notifSub">Occasional nudge if you haven't opened FocusDrop in a while</div>
+      </div>
+      <div class="switch" id="notifSwitch"><div class="knob"></div></div>
+    </div>
+
     <div class="overlay-row">
       <div>
         <div class="row-label">Reset all data</div>
@@ -607,8 +773,11 @@
   var STORAGE_KEY = "focusdrop_items_v1";
   var STORAGE_BACKUP_KEY = "focusdrop_items_v1_corrupt_backup";
   var THEME_KEY = "focusdrop_theme_v1";
+  var STREAK_KEY = "focusdrop_streak_v1";
+  var NOTIF_KEY = "focusdrop_notif_enabled_v1";
   var items = [];
   var undoStack = []; // {item, prevSnapshot, action}
+  var lowEnergyMode = false; // session-only, not persisted — a per-visit mood, not a setting
 
   // ---------- storage (hardened) ----------
   function safeParse(raw) {
@@ -707,9 +876,10 @@
     return "i" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   }
 
-  function addItem(text) {
+  function addItem(text, opts) {
     text = text.trim();
     if (!text) return null;
+    opts = opts || {};
     var now = Date.now();
     var newItem = {
       id: uid(),
@@ -718,7 +888,9 @@
       lastSeenAt: null,
       snoozeUntil: null,
       seenCount: 0,
-      status: "open"
+      status: "open",
+      firstStep: opts.firstStep ? String(opts.firstStep).trim() : null,
+      quick: !!opts.quick // marked as a "quick/easy" item, for low-energy filtering
     };
     items.push(newItem);
     save();
@@ -731,11 +903,20 @@
 
   function eligibleItems() {
     var now = Date.now();
-    return items.filter(function (it) {
+    var pool = items.filter(function (it) {
       if (it.status !== "open") return false;
       if (it.snoozeUntil && it.snoozeUntil > now) return false;
       return true;
     });
+    if (lowEnergyMode) {
+      var quickOnly = pool.filter(function (it) { return it.quick; });
+      // If nothing is marked quick yet, don't leave the user with an empty
+      // screen just because they haven't tagged anything — fall back to
+      // the full pool rather than punishing them for not having used the
+      // feature yet.
+      return quickOnly.length > 0 ? quickOnly : pool;
+    }
+    return pool;
   }
 
   // Weighted pick blended with pure randomness (70% weighted / 30% uniform
@@ -814,6 +995,12 @@
     render();
   }
 
+  function toggleQuick(item) {
+    item.quick = !item.quick;
+    save();
+    render();
+  }
+
   function snoozeItem(item, hours) {
     var prev = snapshotItem(item);
     markSeen(item);
@@ -878,6 +1065,53 @@
     document.getElementById("toast").classList.remove("show");
   }
 
+  // ---------- streak (engagement-based, not completion-based) ----------
+  // Deliberately tracks "did you open/use the app today" rather than "did
+  // you clear your list" — per ADHD-design research, a completion-based
+  // streak punishes low-capacity days and backfires. Showing up counts.
+  function todayKey() {
+    var d = new Date();
+    return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+  }
+
+  function loadStreak() {
+    try {
+      var raw = localStorage.getItem(STREAK_KEY);
+      if (!raw) return { lastDay: null, current: 0, longest: 0 };
+      var parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return { lastDay: null, current: 0, longest: 0 };
+      return {
+        lastDay: parsed.lastDay || null,
+        current: typeof parsed.current === "number" ? parsed.current : 0,
+        longest: typeof parsed.longest === "number" ? parsed.longest : 0
+      };
+    } catch (e) {
+      return { lastDay: null, current: 0, longest: 0 };
+    }
+  }
+
+  function saveStreak(s) {
+    try { localStorage.setItem(STREAK_KEY, JSON.stringify(s)); } catch (e) { /* best effort */ }
+  }
+
+  function recordEngagementToday() {
+    var s = loadStreak();
+    var today = todayKey();
+    if (s.lastDay === today) return; // already counted today
+    var yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    var yKey = yesterday.getFullYear() + "-" + (yesterday.getMonth() + 1) + "-" + yesterday.getDate();
+
+    if (s.lastDay === yKey) {
+      s.current += 1; // continued the streak
+    } else {
+      s.current = 1; // streak broken or first ever day — start fresh, no shame framing
+    }
+    s.longest = Math.max(s.longest, s.current);
+    s.lastDay = today;
+    saveStreak(s);
+  }
+
   // ---------- rendering ----------
   function fmtAge(ts) {
     var d = daysSince(ts);
@@ -906,11 +1140,28 @@
   var backlogOpen = false;
 
   function render() {
+    recordEngagementToday();
+    renderStreak();
     renderStats();
     renderSurface();
     renderBacklog();
   }
 
+  function renderStreak() {
+    var banner = document.getElementById("streakBanner");
+    if (items.length === 0) { banner.style.display = "none"; return; }
+    var s = loadStreak();
+    if (s.current < 2) { banner.style.display = "none"; return; } // don't nag on day 1
+    banner.style.display = "block";
+    banner.innerHTML = "";
+    banner.appendChild(el("div", { class: "streak-num", text: s.current + " day" + (s.current === 1 ? "" : "s") }));
+    banner.appendChild(el("div", { class: "streak-label", text: "in a row showing up — that's what counts" }));
+  }
+
+  // Shame-aware framing: research on ADHD tools flags that a big raw
+  // "open item" count reads as a backlog of failure and reinforces shame
+  // spirals. We still show the real numbers (nothing is hidden), but lead
+  // with positive/neutral framing rather than a stark unprocessed count.
   function renderStats() {
     var bar = document.getElementById("statsBar");
     bar.innerHTML = "";
@@ -920,15 +1171,18 @@
     var snoozed = items.filter(function (i) {
       return i.status === "open" && i.snoozeUntil && i.snoozeUntil > Date.now();
     }).length;
+    var waiting = open - snoozed;
     [
-      open + " open",
-      snoozed + " snoozed",
       done + " done",
-      dropped + " dropped"
+      waiting + " waiting for you",
+      snoozed + " snoozed",
+      dropped + " let go"
     ].forEach(function (t) {
       bar.appendChild(el("span", { text: t }));
     });
   }
+
+  var activeTimer = null; // { itemId, remainingSec, intervalId }
 
   function renderSurface() {
     var stage = document.getElementById("surfaceStage");
@@ -939,7 +1193,9 @@
     if (!currentSurfaced) {
       var msg = items.length === 0
         ? "Nothing dropped yet. Type something above — anything, half-formed is fine."
-        : "Nothing to resurface right now. Everything's snoozed, done, or dropped.";
+        : (lowEnergyMode
+            ? "Nothing quick/easy waiting right now. Try turning off low energy mode, or just rest."
+            : "Nothing to resurface right now. Everything's snoozed, done, or dropped.");
       var card = el("div", { class: "surface-card" }, [
         el("div", { class: "empty-state", text: msg })
       ]);
@@ -948,18 +1204,100 @@
     }
 
     var it = currentSurfaced;
+
+    // If a timer is running for a DIFFERENT item than what's surfaced, stop
+    // it — the surfaced item changed out from under it (e.g. after Done).
+    if (activeTimer && activeTimer.itemId !== it.id) {
+      stopTimer();
+    }
+
+    if (activeTimer && activeTimer.itemId === it.id) {
+      renderTimerCard(stage, it);
+      return;
+    }
+
     var metaText = "Dropped " + fmtAge(it.createdAt) +
       (it.seenCount > 0 ? " · seen " + it.seenCount + "×" : " · new");
 
-    var card = el("div", { class: "surface-card", id: "activeCard" }, [
+    var ageClass = "";
+    var ageDays = daysSince(it.createdAt);
+    if (ageDays >= 14) ageClass = "age-hot";
+    else if (ageDays >= 5) ageClass = "age-warm";
+
+    var cardChildren = [
       el("div", { class: "prompt-label", text: "What about this?" }),
+      el("div", { class: "item-text", text: it.text })
+    ];
+
+    if (it.firstStep) {
+      cardChildren.push(el("div", { class: "first-step-hint", text: "First step: " + it.firstStep }));
+    }
+
+    cardChildren.push(el("div", { class: "item-meta", text: metaText }));
+
+    cardChildren.push(el("div", { class: "just-start-row" }, [
+      el("button", { class: "btn-timer", text: "▶ Just start (2 min)", onclick: function () { startTimer(it, 120); } }),
+      el("button", {
+        class: "btn-timer",
+        text: it.quick ? "⚡ Quick/easy ✓" : "⚡ Mark quick/easy",
+        onclick: function () { toggleQuick(it); }
+      })
+    ]));
+
+    cardChildren.push(el("div", { class: "surface-actions" }, [
+      el("button", { class: "btn-done", text: "Did it", onclick: function () { markDone(it); } }),
+      el("button", { class: "btn-snooze", text: "Still relevant (snooze 8h)", onclick: function () { snoozeItem(it, 8); } }),
+      el("button", { class: "btn-drop", text: "Drop it", onclick: function () { markDropped(it); } }),
+      el("button", { class: "btn-ghost", text: "Skip for now", onclick: skipSurfaced })
+    ]));
+
+    var card = el("div", { class: "surface-card " + ageClass, id: "activeCard" }, cardChildren);
+    stage.appendChild(card);
+  }
+
+  function startTimer(item, seconds) {
+    stopTimer();
+    activeTimer = { itemId: item.id, remainingSec: seconds };
+    activeTimer.intervalId = setInterval(function () {
+      activeTimer.remainingSec -= 1;
+      if (activeTimer.remainingSec <= 0) {
+        stopTimer();
+        showToast("Time's up — still going, or ready to log it?");
+        render();
+        return;
+      }
+      updateTimerDisplay();
+    }, 1000);
+    render();
+  }
+
+  function stopTimer() {
+    if (activeTimer && activeTimer.intervalId) clearInterval(activeTimer.intervalId);
+    activeTimer = null;
+  }
+
+  function fmtClock(totalSec) {
+    var m = Math.floor(totalSec / 60);
+    var s = totalSec % 60;
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  }
+
+  function updateTimerDisplay() {
+    var clockEl = document.getElementById("timerClock");
+    if (clockEl && activeTimer) clockEl.textContent = fmtClock(activeTimer.remainingSec);
+  }
+
+  function renderTimerCard(stage, it) {
+    var card = el("div", { class: "surface-card", id: "activeCard" }, [
+      el("div", { class: "prompt-label", text: "Just this, for a moment" }),
       el("div", { class: "item-text", text: it.text }),
-      el("div", { class: "item-meta", text: metaText }),
+      el("div", { class: "timer-active-box" }, [
+        el("div", { class: "timer-display", id: "timerClock", text: fmtClock(activeTimer.remainingSec) }),
+        el("div", { class: "timer-sub", text: "No pressure to finish — just started counts" })
+      ]),
       el("div", { class: "surface-actions" }, [
-        el("button", { class: "btn-done", text: "Did it", onclick: function () { markDone(it); } }),
-        el("button", { class: "btn-snooze", text: "Still relevant (snooze 8h)", onclick: function () { snoozeItem(it, 8); } }),
-        el("button", { class: "btn-drop", text: "Drop it", onclick: function () { markDropped(it); } }),
-        el("button", { class: "btn-ghost", text: "Skip for now", onclick: skipSurfaced })
+        el("button", { class: "btn-done", text: "Did it", onclick: function () { stopTimer(); markDone(it); } }),
+        el("button", { class: "btn-ghost", text: "Stop timer", onclick: function () { stopTimer(); render(); } })
       ])
     ]);
     stage.appendChild(card);
@@ -1033,10 +1371,11 @@
     var open = items.filter(function (i) { return i.status === "open"; }).length;
     var total = items.length;
 
+    var s = loadStreak();
     [
       [String(done), "Done"],
-      [String(dropped), "Dropped"],
-      [String(open), "Still open"],
+      [String(open), "Still with you"],
+      [String(s.longest), "Best streak (days)"],
       [String(total), "Total ever dropped"]
     ].forEach(function (pair) {
       grid.appendChild(el("div", { class: "stat-tile" }, [
@@ -1048,9 +1387,9 @@
     var openItems = items.filter(function (i) { return i.status === "open"; });
     if (openItems.length > 0) {
       var oldest = openItems.reduce(function (a, b) { return a.createdAt < b.createdAt ? a : b; });
-      longLived.textContent = "Longest-lived open item: “" + oldest.text + "” — dropped " + fmtAge(oldest.createdAt) + ".";
+      longLived.textContent = "Been waiting longest: “" + oldest.text + "” — dropped " + fmtAge(oldest.createdAt) + ". No rush.";
     } else {
-      longLived.textContent = "No open items right now.";
+      longLived.textContent = "Nothing waiting right now.";
     }
   }
 
@@ -1068,8 +1407,13 @@
     void ghost.offsetWidth; // restart animation
     ghost.classList.add("fly");
 
-    addItem(val);
+    var firstStepInput = document.getElementById("firstStepInput");
+    var firstStepVal = firstStepInput.value.trim();
+
+    addItem(val, { firstStep: firstStepVal || null });
     input.value = "";
+    firstStepInput.value = "";
+    document.getElementById("firstStepWrap").classList.remove("show");
     input.focus();
     render();
   }
@@ -1077,6 +1421,23 @@
   document.getElementById("captureBtn").addEventListener("click", handleCapture);
   document.getElementById("captureInput").addEventListener("keydown", function (e) {
     if (e.key === "Enter") handleCapture();
+  });
+  document.getElementById("firstStepInput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") handleCapture();
+  });
+
+  document.getElementById("firstStepToggle").addEventListener("click", function () {
+    var wrap = document.getElementById("firstStepWrap");
+    wrap.classList.toggle("show");
+    if (wrap.classList.contains("show")) document.getElementById("firstStepInput").focus();
+  });
+
+  document.getElementById("energyToggle").addEventListener("click", function () {
+    lowEnergyMode = !lowEnergyMode;
+    document.getElementById("energyToggle").classList.toggle("active", lowEnergyMode);
+    currentSurfaced = null;
+    refreshSurfaced();
+    render();
   });
 
   document.getElementById("backlogToggle").addEventListener("click", function () {
@@ -1105,6 +1466,100 @@
   });
   document.getElementById("statsBackdrop").addEventListener("click", function (e) {
     if (e.target.id === "statsBackdrop") e.currentTarget.classList.remove("show");
+  });
+
+  // ---------- gentle nudge notifications ----------
+  // Honest scope: this is a static page with no server/push backend, so
+  // reminders can only fire via the browser Notification API while this
+  // tab/PWA is open (checked periodically). No guilt framing, no streak
+  // pressure — just a low-frequency "still here when you're ready" nudge
+  // if the user hasn't engaged in a while.
+  var notifCheckInterval = null;
+
+  function loadNotifEnabled() {
+    try { return localStorage.getItem(NOTIF_KEY) === "1"; } catch (e) { return false; }
+  }
+
+  function saveNotifEnabled(on) {
+    try { localStorage.setItem(NOTIF_KEY, on ? "1" : "0"); } catch (e) { /* best effort */ }
+  }
+
+  function renderNotifSwitch() {
+    var sw = document.getElementById("notifSwitch");
+    var sub = document.getElementById("notifSub");
+    var on = loadNotifEnabled();
+    sw.classList.toggle("on", on);
+    if (typeof Notification !== "undefined" && Notification.permission === "denied" && on) {
+      sub.textContent = "Blocked by your browser's notification settings — nothing will fire.";
+    } else {
+      sub.textContent = "Occasional nudge if you haven't opened FocusDrop in a while";
+    }
+  }
+
+  function maybeSendNudge() {
+    if (!loadNotifEnabled()) return;
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    if (document.visibilityState === "visible") return; // don't nudge while they're already here
+    var s = loadStreak();
+    var lastTs = null;
+    try { lastTs = parseInt(localStorage.getItem(NOTIF_KEY + "_last_fired") || "0", 10); } catch (e) { lastTs = 0; }
+    var hoursSinceFire = (Date.now() - (lastTs || 0)) / (1000 * 60 * 60);
+    if (hoursSinceFire < 20) return; // low-frequency, at most ~once a day
+    var today = todayKey();
+    if (s.lastDay === today) return; // already opened it today, no nudge needed
+    try {
+      new Notification("FocusDrop", {
+        body: "No pressure — whenever you're ready, it's all still here.",
+        tag: "focusdrop-gentle-nudge"
+      });
+      localStorage.setItem(NOTIF_KEY + "_last_fired", String(Date.now()));
+    } catch (e) { /* best effort */ }
+  }
+
+  function startNotifChecks() {
+    if (notifCheckInterval) return;
+    notifCheckInterval = setInterval(maybeSendNudge, 30 * 60 * 1000); // check twice an hour
+  }
+
+  function stopNotifChecks() {
+    if (notifCheckInterval) { clearInterval(notifCheckInterval); notifCheckInterval = null; }
+  }
+
+  document.getElementById("notifSwitch").addEventListener("click", function () {
+    var turningOn = !loadNotifEnabled();
+    if (!turningOn) {
+      saveNotifEnabled(false);
+      stopNotifChecks();
+      renderNotifSwitch();
+      return;
+    }
+    if (typeof Notification === "undefined") {
+      showToast("Notifications aren't supported in this browser.");
+      return;
+    }
+    if (Notification.permission === "granted") {
+      saveNotifEnabled(true);
+      startNotifChecks();
+      renderNotifSwitch();
+      showToast("Gentle reminders on.");
+      return;
+    }
+    if (Notification.permission === "denied") {
+      saveNotifEnabled(true);
+      renderNotifSwitch();
+      showToast("Notifications are blocked in your browser settings.");
+      return;
+    }
+    Notification.requestPermission().then(function (perm) {
+      if (perm === "granted") {
+        saveNotifEnabled(true);
+        startNotifChecks();
+        showToast("Gentle reminders on.");
+      } else {
+        saveNotifEnabled(false);
+      }
+      renderNotifSwitch();
+    });
   });
 
   // theme
@@ -1288,12 +1743,37 @@
     _resetForTest: function () {
       items = []; currentSurfaced = null; undoStack = [];
       try { localStorage.removeItem(STORAGE_BACKUP_KEY); } catch (e) {}
-    }
+      try { localStorage.removeItem(STREAK_KEY); } catch (e) {}
+      lowEnergyMode = false;
+      stopTimer();
+    },
+    // --- 7-feature test hooks ---
+    setLowEnergyMode: function (on) {
+      lowEnergyMode = !!on;
+      document.getElementById("energyToggle").classList.toggle("active", lowEnergyMode);
+      currentSurfaced = null; refreshSurfaced();
+    },
+    getLowEnergyMode: function () { return lowEnergyMode; },
+    toggleQuick: toggleQuick,
+    startTimer: startTimer,
+    stopTimer: stopTimer,
+    getActiveTimer: function () { return activeTimer; },
+    loadStreak: loadStreak,
+    setStreakForTest: function (s) { saveStreak(s); },
+    setFirstStep: function (it, val) { it.firstStep = val; save(); },
+    getNotifEnabled: loadNotifEnabled,
+    setNotifEnabled: function (on) { saveNotifEnabled(!!on); },
+    maybeSendNudge: maybeSendNudge,
+    eligibleItems: eligibleItems
   };
 
   loadTheme();
   load();
   render();
+  renderNotifSwitch();
+  if (loadNotifEnabled() && typeof Notification !== "undefined" && Notification.permission === "granted") {
+    startNotifChecks();
+  }
 })();
 </script>
 </body>
