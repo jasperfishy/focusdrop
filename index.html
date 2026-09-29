@@ -668,11 +668,11 @@
   </div>
 
   <div class="first-step-input" id="firstStepWrap">
-    <input id="firstStepInput" type="text" placeholder="Tiniest first step (optional) — press Enter to attach" autocomplete="off">
+    <input id="firstStepInput" type="text" placeholder="Bare minimum to get started — e.g. &quot;open the email&quot; (optional)" autocomplete="off">
   </div>
 
   <div class="capture-extra">
-    <button class="first-step-toggle" id="firstStepToggle">+ add a tiny first step</button>
+    <button class="first-step-toggle" id="firstStepToggle">+ add the bare minimum to get started</button>
     <div class="energy-toggle" id="energyToggle" title="Only show quick/easy items while this is on">
       <span>🔋 Low energy mode</span>
     </div>
@@ -1230,7 +1230,7 @@
     ];
 
     if (it.firstStep) {
-      cardChildren.push(el("div", { class: "first-step-hint", text: "First step: " + it.firstStep }));
+      cardChildren.push(el("div", { class: "first-step-hint", text: "To start: " + it.firstStep }));
     }
 
     cardChildren.push(el("div", { class: "item-meta", text: metaText }));
