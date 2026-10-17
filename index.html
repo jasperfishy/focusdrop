@@ -2,8 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>FocusDrop</title>
+<meta name="description" content="FocusDrop: drop a thought, skip the pressure. A calm capture-and-resurface app designed for ADHD brains.">
+<meta name="theme-color" id="themeColorMeta" content="#0f1115">
+<meta name="color-scheme" content="dark light">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FocusDrop">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
   :root {
     --bg: #0f1115;
@@ -64,7 +74,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 24px 16px 60px;
+    padding: calc(24px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(60px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+    -webkit-text-size-adjust: 100%;
     transition: background-color 0.25s ease, color 0.25s ease;
   }
   .wrap { width: 100%; max-width: 640px; position: relative; }
@@ -100,9 +111,9 @@
     background: var(--panel);
     border: 1px solid var(--border);
     color: var(--text-dim);
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -152,7 +163,7 @@
   .capture-box button:active { transform: scale(0.96); }
 
   .capture-extra {
-    max-width: 640px;
+    max-width: none;
     width: 100%;
     margin: -12px 0 18px;
     display: flex;
@@ -171,7 +182,7 @@
     padding: 4px 0;
   }
   .first-step-input {
-    max-width: 640px;
+    max-width: none;
     width: 100%;
     margin: -10px 0 18px;
     display: none;
@@ -257,6 +268,7 @@
     position: relative;
     min-height: 180px;
     margin-bottom: 20px;
+    display: grid;
   }
   .surface-card {
     background: var(--panel);
@@ -270,8 +282,8 @@
     justify-content: center;
     align-items: center;
     gap: 16px;
-    position: absolute;
-    inset: 0;
+    position: relative;
+    grid-area: 1 / 1;
     opacity: 0;
     transform: translateY(6px);
     animation: cardIn 0.3s ease forwards;
@@ -344,8 +356,8 @@
     border: 1px solid var(--border);
     color: var(--text);
     border-radius: 10px;
-    padding: 8px 14px;
-    font-size: 0.85rem;
+    padding: 11px 16px;
+    font-size: 0.88rem;
     font-weight: 600;
     cursor: pointer;
     transition: transform 0.1s ease, border-color 0.15s ease, color 0.15s ease;
@@ -384,8 +396,8 @@
   .surface-actions button {
     border: none;
     border-radius: 10px;
-    padding: 10px 16px;
-    font-size: 0.9rem;
+    padding: 13px 18px;
+    font-size: 0.92rem;
     font-weight: 600;
     cursor: pointer;
     transition: transform 0.1s ease, opacity 0.15s ease;
@@ -474,11 +486,8 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    overflow: hidden;
-    max-height: 2000px;
-    transition: max-height 0.3s ease;
   }
-  .list.collapsed { max-height: 0; }
+  .list.collapsed { display: none; }
 
   .list-item {
     background: var(--panel);
@@ -498,8 +507,9 @@
     border: 1px solid var(--border);
     color: var(--text-dim);
     border-radius: 8px;
-    padding: 4px 8px;
-    font-size: 0.75rem;
+    padding: 9px 12px;
+    min-height: 40px;
+    font-size: 0.78rem;
     cursor: pointer;
   }
 
@@ -714,6 +724,127 @@
     .header-tools { position: static; justify-content: center; margin-top: 10px; }
     header { display: flex; flex-direction: column; }
   }
+
+  /* ---- v2: follow the OS theme when "System" is chosen (previously stayed dark) ---- */
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]):not([data-theme="light"]) {
+      --bg: #f6f7f9;
+      --bg-grad-1: #eef5f2;
+      --bg-grad-2: #f6f0fa;
+      --panel: #ffffff;
+      --panel-2: #f0f1f4;
+      --text: #1c1f26;
+      --text-dim: #6b7280;
+      --accent: #10b981;
+      --accent-2: #0ea5e9;
+      --accent-text: #ffffff;
+      --accent-2-text: #ffffff;
+      --violet: #8b5cf6;
+      --violet-text: #ffffff;
+      --danger: #ef4444;
+      --danger-text: #ffffff;
+      --warn: #d97706;
+      --warn-text: #ffffff;
+      --border: #e2e4e9;
+      --shadow: 0 8px 24px rgba(20,20,30,0.08);
+      --shadow-glow: 0 0 0 1px rgba(16,185,129,0.08), 0 10px 32px rgba(16,185,129,0.08);
+    }
+  }
+
+  /* ---- v2: keyboard focus, touch targets, form controls ---- */
+  button, select, input, .switch, .energy-toggle { font-family: inherit; }
+  :focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
+  input:focus-visible { outline-offset: 0; }
+  .energy-toggle { color: var(--text-dim); min-height: 40px; font-size: 0.82rem; }
+  .first-step-toggle { min-height: 40px; font-size: 0.82rem; }
+  .capture-box button { min-height: 52px; flex-shrink: 0; }
+  .capture-box input { min-width: 0; }
+  .capture-extra > div:first-child { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .stats-bar { font-size: 0.82rem; }
+  footer { font-size: 0.8rem; }
+  .overlay-btn { min-height: 40px; }
+  a.overlay-btn { text-decoration: none; display: inline-flex; align-items: center; }
+  .overlay-select {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    min-height: 40px;
+  }
+  .time-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 0.85rem; color: var(--text-dim); }
+  .time-row input.overlay-select { width: 104px; padding: 8px 6px; min-width: 0; }
+  .overlay-row { flex-wrap: wrap; }
+  .switch { min-width: 40px; }
+  .overlay-panel { overscroll-behavior: contain; }
+
+  /* ---- v2: starter suggestions ---- */
+  .starter-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .starter-wrap { margin: -6px 0 18px; text-align: center; }
+  .chip {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    cursor: pointer;
+    min-height: 44px;
+    transition: transform 0.1s ease, border-color 0.15s ease;
+  }
+  .chip:hover { border-color: var(--accent); }
+  .chip:active { transform: scale(0.96); }
+  .suggest-label { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 8px; }
+  .surface-card .suggest-label { margin-bottom: 0; }
+
+  /* ---- v2: install dialog ---- */
+  .platform-block {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 10px;
+  }
+  .platform-block.current { border-color: var(--accent); }
+  .platform-block h3 { margin: 0 0 4px; font-size: 0.92rem; }
+  .install-steps { margin: 6px 0 0; padding-left: 20px; color: var(--text-dim); font-size: 0.88rem; line-height: 1.55; }
+  .install-steps li { margin-bottom: 4px; }
+  .install-note { font-size: 0.8rem; color: var(--text-dim); line-height: 1.5; margin: 12px 0 0; }
+
+  /* ---- v2: bigger screens ---- */
+  @media (min-width: 768px) {
+    body { padding-top: 44px; }
+    .wrap { max-width: 720px; }
+    header h1 { font-size: 1.85rem; }
+    header p { font-size: 1rem; }
+    .capture-box input { font-size: 1.1rem; }
+    .surface-card .item-text { font-size: 1.5rem; }
+    .surface-card { padding: 34px 28px; }
+  }
+  @media (min-width: 1100px) {
+    .wrap { max-width: 780px; }
+  }
+  @media (max-width: 380px) {
+    .surface-card { padding: 22px 14px; }
+    .surface-actions button, .btn-timer { flex: 1 1 100%; }
+    .capture-box { padding: 12px; }
+  }
+  @media (max-height: 500px) and (orientation: landscape) {
+    .overlay-backdrop { padding: 12px 16px; }
+    .overlay-panel { max-height: 94vh; }
+  }
+
+  /* ---- v2: respect "reduce motion" ---- */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    .drop-ghost { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -722,13 +853,14 @@
     <h1>FocusDrop</h1>
     <p>Drop it. Don't decide. It'll come back around.</p>
     <div class="header-tools">
+      <button class="icon-btn" id="installIconBtn" title="Install or download FocusDrop" aria-label="Install or download FocusDrop">📲</button>
       <button class="icon-btn" id="statsIconBtn" title="Stats" aria-label="Stats">📊</button>
       <button class="icon-btn" id="settingsIconBtn" title="Settings" aria-label="Settings">⚙️</button>
     </div>
   </header>
 
   <div class="capture-box">
-    <input id="captureInput" type="text" placeholder="Type a thought, task, idea — press Enter" autocomplete="off">
+    <input id="captureInput" type="text" placeholder="Type a thought, task, idea — press Enter" autocomplete="off" aria-label="Drop a thought, task or idea" enterkeyhint="send" autocapitalize="sentences">
     <button id="captureBtn">Drop</button>
     <div class="drop-ghost" id="dropGhost"></div>
   </div>
@@ -738,11 +870,15 @@
   </div>
 
   <div class="capture-extra">
-    <button class="first-step-toggle" id="firstStepToggle">+ add the bare minimum to get started</button>
-    <div class="energy-toggle" id="energyToggle" title="Only show quick/easy items while this is on">
-      <span>🔋 Low energy mode</span>
+    <div>
+      <button class="first-step-toggle" id="firstStepToggle" type="button">+ add the bare minimum to get started</button>
+      <button class="first-step-toggle" id="ideasToggle" type="button">💡 Need an idea?</button>
     </div>
+    <button class="energy-toggle" id="energyToggle" type="button" aria-pressed="false" title="Only show quick/easy items while this is on">
+      <span>🔋 Low energy mode</span>
+    </button>
   </div>
+  <div class="starter-wrap" id="ideasWrap" style="display:none;"></div>
 
   <div class="streak-banner" id="streakBanner" style="display:none;"></div>
 
@@ -759,14 +895,14 @@
   <footer>Stored locally in this browser only. Nothing leaves your device.</footer>
 </div>
 
-<div class="toast" id="toast">
+<div class="toast" id="toast" role="status" aria-live="polite">
   <span id="toastMsg"></span>
 </div>
 
 <!-- Settings overlay -->
 <div class="overlay-backdrop" id="settingsBackdrop">
-  <div class="overlay-panel">
-    <h2>Settings</h2>
+  <div class="overlay-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <h2 id="settingsTitle">Settings</h2>
 
     <div class="overlay-row">
       <div>
@@ -774,9 +910,19 @@
       </div>
     </div>
     <div class="theme-toggle-row" style="margin-bottom:14px;">
-      <div class="theme-pill" id="themeDark">Dark</div>
-      <div class="theme-pill" id="themeLight">Light</div>
-      <div class="theme-pill" id="themeSystem">System</div>
+      <button type="button" class="theme-pill" id="themeDark" aria-pressed="false">Dark</button>
+      <button type="button" class="theme-pill" id="themeLight" aria-pressed="false">Light</button>
+      <button type="button" class="theme-pill" id="themeSystem" aria-pressed="false">System</button>
+    </div>
+
+    <div class="overlay-row" id="installRow">
+      <div>
+        <div class="row-label">Install app</div>
+        <div class="row-sub">Add to your home screen or desktop. Opens fast and works offline.</div>
+      </div>
+      <div class="overlay-actions">
+        <button class="overlay-btn primary" id="settingsInstallBtn" type="button">Install</button>
+      </div>
     </div>
 
     <div class="overlay-row">
@@ -802,10 +948,42 @@
 
     <div class="overlay-row settings-toggle-row">
       <div>
-        <div class="row-label">Gentle reminders</div>
-        <div class="row-sub" id="notifSub">Occasional nudge if you haven't opened FocusDrop in a while</div>
+        <div class="row-label" id="notifLabel">Gentle reminders</div>
+        <div class="row-sub" id="notifSub">A kind nudge with one of your thoughts</div>
       </div>
-      <div class="switch" id="notifSwitch"><div class="knob"></div></div>
+      <div class="switch" id="notifSwitch" role="switch" tabindex="0" aria-checked="false" aria-labelledby="notifLabel"><div class="knob"></div></div>
+    </div>
+    <div class="overlay-row">
+      <div>
+        <div class="row-label">How often</div>
+        <div class="row-sub">Only if you haven't opened FocusDrop for this long</div>
+      </div>
+      <select class="overlay-select" id="remindFreq" aria-label="How often to remind me">
+        <option value="3">Every ~3 hours</option>
+        <option value="6">A few times a day</option>
+        <option value="12">Twice a day</option>
+        <option value="24">Once a day</option>
+      </select>
+    </div>
+    <div class="overlay-row">
+      <div>
+        <div class="row-label">Quiet hours</div>
+        <div class="row-sub">No reminders in this window</div>
+      </div>
+      <div class="time-row">
+        <input type="time" id="quietStart" class="overlay-select" value="21:00" aria-label="Quiet hours start">
+        <span>to</span>
+        <input type="time" id="quietEnd" class="overlay-select" value="08:00" aria-label="Quiet hours end">
+      </div>
+    </div>
+    <div class="overlay-row">
+      <div>
+        <div class="row-label">Try a reminder now</div>
+        <div class="row-sub">Sends a sample nudge so you know it works</div>
+      </div>
+      <div class="overlay-actions">
+        <button class="overlay-btn" id="testNudgeBtn" type="button">Send test</button>
+      </div>
     </div>
 
     <div class="overlay-row">
@@ -824,11 +1002,53 @@
 
 <!-- Stats overlay -->
 <div class="overlay-backdrop" id="statsBackdrop">
-  <div class="overlay-panel">
-    <h2>Stats</h2>
+  <div class="overlay-panel" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
+    <h2 id="statsTitle">Stats</h2>
     <div class="stat-grid" id="statGrid"></div>
     <div class="stat-longlived" id="statLongLived"></div>
     <button class="overlay-close" id="statsClose">Close</button>
+  </div>
+</div>
+
+<!-- Install / download overlay -->
+<div class="overlay-backdrop" id="installBackdrop">
+  <div class="overlay-panel" role="dialog" aria-modal="true" aria-labelledby="installTitle">
+    <h2 id="installTitle">Get FocusDrop on your devices</h2>
+    <p style="margin:0 0 12px;font-size:0.88rem;color:var(--text-dim);line-height:1.5;">
+      Installs like an app, opens instantly, works offline, and your thoughts stay on that device.
+    </p>
+    <div class="overlay-actions" style="flex-wrap:wrap;">
+      <button class="overlay-btn primary" id="installNowBtn" type="button" style="display:none;">Install now</button>
+      <a class="overlay-btn" id="downloadCopyBtn" href="index.html" download="FocusDrop.html">Download offline copy</a>
+    </div>
+
+    <div class="platform-block" data-platform="ios">
+      <h3>iPhone &amp; iPad</h3>
+      <ol class="install-steps">
+        <li>Open this page in <b>Safari</b>.</li>
+        <li>Tap the <b>Share</b> button (the square with an arrow).</li>
+        <li>Choose <b>Add to Home Screen</b>, then tap <b>Add</b>.</li>
+      </ol>
+    </div>
+    <div class="platform-block" data-platform="android">
+      <h3>Android phone &amp; tablet</h3>
+      <ol class="install-steps">
+        <li>Open this page in <b>Chrome</b>.</li>
+        <li>Tap <b>Install now</b> above, or the <b>&#8942;</b> menu then <b>Install app</b> (or <b>Add to Home screen</b>).</li>
+      </ol>
+    </div>
+    <div class="platform-block" data-platform="desktop">
+      <h3>Windows, Mac &amp; Linux</h3>
+      <ol class="install-steps">
+        <li>In <b>Chrome</b> or <b>Edge</b>, click <b>Install now</b> above, or the install icon at the right of the address bar.</li>
+        <li>In <b>Safari on Mac</b>, use <b>File &gt; Add to Dock</b>.</li>
+      </ol>
+    </div>
+    <p class="install-note">
+      The offline copy is a single file you can open in any browser. It keeps its own list, separate from the installed app.
+      Use <b>Export</b> and <b>Import</b> in Settings to move your thoughts between them.
+    </p>
+    <button class="overlay-close" id="installClose" type="button">Close</button>
   </div>
 </div>
 
@@ -841,6 +1061,10 @@
   var THEME_KEY = "focusdrop_theme_v1";
   var STREAK_KEY = "focusdrop_streak_v1";
   var NOTIF_KEY = "focusdrop_notif_enabled_v1";
+  var REMIND_FREQ_KEY = "focusdrop_remind_hours_v1";
+  var QUIET_KEY = "focusdrop_quiet_hours_v1";
+  var ACTIVE_KEY = "focusdrop_last_active_v1";
+  var swReg = null;
   var items = [];
   var undoStack = []; // {item, prevSnapshot, action}
   var lowEnergyMode = false; // session-only, not persisted — a per-visit mood, not a setting
@@ -907,6 +1131,7 @@
         return false;
       }
     } catch (e) { /* verification best-effort */ }
+    scheduleSnapshot();
     return true;
   }
 
@@ -918,10 +1143,19 @@
     } else {
       root.setAttribute("data-theme", mode);
     }
-    document.querySelectorAll(".theme-pill").forEach(function (p) { p.classList.remove("active"); });
+    document.querySelectorAll(".theme-pill").forEach(function (p) { p.classList.remove("active"); p.setAttribute("aria-pressed", "false"); });
     var map = { dark: "themeDark", light: "themeLight", system: "themeSystem" };
     var btn = document.getElementById(map[mode]);
-    if (btn) btn.classList.add("active");
+    if (btn) { btn.classList.add("active"); btn.setAttribute("aria-pressed", "true"); }
+    updateThemeColor(mode);
+  }
+
+  function updateThemeColor(mode) {
+    var m = document.getElementById("themeColorMeta");
+    if (!m) return;
+    var dark = mode === "dark" ||
+      (mode === "system" && !(window.matchMedia && matchMedia("(prefers-color-scheme: light)").matches));
+    m.setAttribute("content", dark ? "#0f1115" : "#f6f7f9");
   }
 
   function loadTheme() {
@@ -1015,6 +1249,7 @@
   }
 
   var currentSurfaced = null;
+  var suggestForId = null;
 
   function refreshSurfaced() {
     currentSurfaced = pickSurfaceItem();
@@ -1115,7 +1350,7 @@
     msgEl.appendChild(undoBtn);
     toast.classList.add("show");
     clearTimeout(undoTimer);
-    undoTimer = setTimeout(hideToast, 5000);
+    undoTimer = setTimeout(hideToast, 8000);
   }
 
   function showToast(msg) {
@@ -1124,7 +1359,7 @@
     msgEl.textContent = msg;
     toast.classList.add("show");
     clearTimeout(undoTimer);
-    undoTimer = setTimeout(hideToast, 3200);
+    undoTimer = setTimeout(hideToast, 4500);
   }
 
   function hideToast() {
@@ -1207,6 +1442,7 @@
 
   function render() {
     recordEngagementToday();
+    touchActive();
     renderStreak();
     renderStats();
     renderSurface();
@@ -1262,14 +1498,18 @@
         : (lowEnergyMode
             ? "Nothing quick/easy waiting right now. Try turning off low energy mode, or just rest."
             : "Nothing to resurface right now. Everything's snoozed, done, or dropped.");
-      var card = el("div", { class: "surface-card" }, [
-        el("div", { class: "empty-state", text: msg })
-      ]);
+      var emptyChildren = [el("div", { class: "empty-state", text: msg })];
+      if (items.length === 0) {
+        emptyChildren.push(el("div", { class: "suggest-label", text: "Need a nudge to get going? Tap one to drop it:" }));
+        emptyChildren.push(makeStarterChips(5));
+      }
+      var card = el("div", { class: "surface-card" }, emptyChildren);
       stage.appendChild(card);
       return;
     }
 
     var it = currentSurfaced;
+    if (suggestForId && suggestForId !== it.id) suggestForId = null;
 
     // If a timer is running for a DIFFERENT item than what's surfaced, stop
     // it — the surfaced item changed out from under it (e.g. after Done).
@@ -1297,22 +1537,41 @@
 
     if (it.firstStep) {
       cardChildren.push(el("div", { class: "first-step-hint", text: "To start: " + it.firstStep }));
+    } else if (suggestForId === it.id) {
+      var sugRow = el("div", { class: "starter-row" });
+      suggestFirstSteps(it).forEach(function (stepText) {
+        sugRow.appendChild(el("button", {
+          class: "chip", type: "button", text: stepText,
+          onclick: function () { it.firstStep = stepText; save(); suggestForId = null; render(); }
+        }));
+      });
+      cardChildren.push(el("div", { class: "suggest-label", text: "Pick a tiny first step:" }));
+      cardChildren.push(sugRow);
     }
 
     cardChildren.push(el("div", { class: "item-meta", text: metaText }));
 
-    cardChildren.push(el("div", { class: "just-start-row" }, [
+    var startRowKids = [
       el("button", { class: "btn-timer", text: "▶ Just start (2 min)", onclick: function () { startTimer(it, 120); } }),
       el("button", {
         class: "btn-timer",
         text: it.quick ? "⚡ Quick/easy ✓" : "⚡ Mark quick/easy",
         onclick: function () { toggleQuick(it); }
-      })
-    ]));
+      }),
+      el("button", { class: "btn-timer", text: "▶ 5 min", onclick: function () { startTimer(it, 300); } })
+    ];
+    if (!it.firstStep && suggestForId !== it.id) {
+      startRowKids.push(el("button", {
+        class: "btn-timer", text: "💡 Help me start",
+        onclick: function () { suggestForId = it.id; render(); }
+      }));
+    }
+    cardChildren.push(el("div", { class: "just-start-row" }, startRowKids));
 
     cardChildren.push(el("div", { class: "surface-actions" }, [
       el("button", { class: "btn-done", text: "Did it", onclick: function () { markDone(it); } }),
-      el("button", { class: "btn-snooze", text: "Still relevant (snooze 8h)", onclick: function () { snoozeItem(it, 8); } }),
+      el("button", { class: "btn-snooze", text: "Later (8h)", title: "Hide it for 8 hours, then it comes back", onclick: function () { snoozeItem(it, 8); } }),
+      el("button", { class: "btn-snooze", text: "Tomorrow", title: "Hide it for a day, then it comes back", onclick: function () { snoozeItem(it, 24); } }),
       el("button", { class: "btn-drop", text: "Drop it", onclick: function () { markDropped(it); } }),
       el("button", { class: "btn-ghost", text: "Skip for now", onclick: skipSurfaced })
     ]));
@@ -1323,17 +1582,36 @@
 
   function startTimer(item, seconds) {
     stopTimer();
-    activeTimer = { itemId: item.id, remainingSec: seconds };
-    activeTimer.intervalId = setInterval(function () {
-      activeTimer.remainingSec -= 1;
-      if (activeTimer.remainingSec <= 0) {
-        stopTimer();
-        showToast("Time's up — still going, or ready to log it?");
-        render();
-        return;
-      }
-      updateTimerDisplay();
-    }, 1000);
+    activeTimer = { itemId: item.id, remainingSec: seconds, totalSec: seconds, endsAt: Date.now() + seconds * 1000 };
+    activeTimer.intervalId = setInterval(tickTimer, 500);
+    render();
+  }
+
+  // Counts against the real clock instead of decrementing once per tick, so a
+  // throttled or backgrounded tab still finishes at the right moment.
+  function tickTimer() {
+    if (!activeTimer) return;
+    var rem = Math.max(0, Math.ceil((activeTimer.endsAt - Date.now()) / 1000));
+    activeTimer.remainingSec = rem;
+    if (rem <= 0) {
+      var finishedId = activeTimer.itemId;
+      stopTimer();
+      timerFinished(finishedId);
+      return;
+    }
+    updateTimerDisplay();
+  }
+
+  function timerFinished(itemId) {
+    showToast("Time's up — still going, or ready to log it?");
+    try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
+    if (document.visibilityState !== "visible" && typeof Notification !== "undefined" && Notification.permission === "granted") {
+      showNotificationSafe("Time's up", {
+        body: "Nice work showing up. Still going, or ready to log it?",
+        tag: "focusdrop-timer",
+        data: { itemId: itemId }
+      }).catch(function () {});
+    }
     render();
   }
 
@@ -1418,7 +1696,11 @@
       var row = el("div", { class: "list-item" }, [
         el("div", { class: "li-text", text: it.text }),
         el("div", { class: "li-age", text: ageLabel }),
-        el("button", { text: "Drop", onclick: function () { markDropped(it); } })
+        el("button", {
+          type: "button", text: "Do now", "aria-label": "Do now: " + it.text,
+          onclick: function () { currentSurfaced = it; render(); try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) {} }
+        }),
+        el("button", { type: "button", text: "Drop", "aria-label": "Drop: " + it.text, onclick: function () { markDropped(it); } })
       ]);
       listEl.appendChild(row);
     });
@@ -1501,6 +1783,7 @@
   document.getElementById("energyToggle").addEventListener("click", function () {
     lowEnergyMode = !lowEnergyMode;
     document.getElementById("energyToggle").classList.toggle("active", lowEnergyMode);
+    document.getElementById("energyToggle").setAttribute("aria-pressed", lowEnergyMode ? "true" : "false");
     currentSurfaced = null;
     refreshSurfaced();
     render();
@@ -1511,36 +1794,173 @@
     renderBacklog();
   });
 
-  // settings overlay
-  document.getElementById("settingsIconBtn").addEventListener("click", function () {
-    document.getElementById("settingsBackdrop").classList.add("show");
+  // overlays (settings, stats, install): focus moves in and returns on close,
+  // Escape closes, Tab stays inside the open panel
+  var overlayOpener = null;
+  function openOverlay(id) {
+    overlayOpener = document.activeElement;
+    var b = document.getElementById(id);
+    b.classList.add("show");
+    var f = b.querySelector("button:not([style*='display: none']), a[href], select, input:not([type=file])");
+    if (f) setTimeout(function () { f.focus(); }, 0);
+  }
+  function closeOverlay(id) {
+    document.getElementById(id).classList.remove("show");
+    if (overlayOpener && overlayOpener.focus) { try { overlayOpener.focus(); } catch (e) {} }
+    overlayOpener = null;
+  }
+  [["settingsBackdrop", "settingsClose"], ["statsBackdrop", "statsClose"], ["installBackdrop", "installClose"]].forEach(function (pair) {
+    document.getElementById(pair[1]).addEventListener("click", function () { closeOverlay(pair[0]); });
+    document.getElementById(pair[0]).addEventListener("click", function (e) {
+      if (e.target.id === pair[0]) closeOverlay(pair[0]);
+    });
   });
-  document.getElementById("settingsClose").addEventListener("click", function () {
+  document.getElementById("settingsIconBtn").addEventListener("click", function () { openOverlay("settingsBackdrop"); });
+  document.getElementById("statsIconBtn").addEventListener("click", function () { renderStatsPanel(); openOverlay("statsBackdrop"); });
+  document.getElementById("installIconBtn").addEventListener("click", function () { updateInstallUi(); openOverlay("installBackdrop"); });
+  document.getElementById("settingsInstallBtn").addEventListener("click", function () {
     document.getElementById("settingsBackdrop").classList.remove("show");
+    updateInstallUi();
+    openOverlay("installBackdrop");
   });
-  document.getElementById("settingsBackdrop").addEventListener("click", function (e) {
-    if (e.target.id === "settingsBackdrop") e.currentTarget.classList.remove("show");
+  document.addEventListener("keydown", function (e) {
+    var open = document.querySelector(".overlay-backdrop.show");
+    if (!open) return;
+    if (e.key === "Escape") { closeOverlay(open.id); return; }
+    if (e.key !== "Tab") return;
+    var focusables = Array.prototype.filter.call(
+      open.querySelectorAll("button:not([disabled]), a[href], select, input:not([type=file]):not([disabled]), [role='switch']"),
+      function (n) { return n.offsetParent !== null; }
+    );
+    if (!focusables.length) return;
+    var first = focusables[0], last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   });
 
-  // stats overlay
-  document.getElementById("statsIconBtn").addEventListener("click", function () {
-    renderStatsPanel();
-    document.getElementById("statsBackdrop").classList.add("show");
-  });
-  document.getElementById("statsClose").addEventListener("click", function () {
-    document.getElementById("statsBackdrop").classList.remove("show");
-  });
-  document.getElementById("statsBackdrop").addEventListener("click", function (e) {
-    if (e.target.id === "statsBackdrop") e.currentTarget.classList.remove("show");
+  // ---------- starter ideas and first-step helper ----------
+  var STARTERS = [
+    { t: "Drink a glass of water", s: "Fill the glass" },
+    { t: "Reply to that message I've been putting off", s: "Open the chat and type just one word" },
+    { t: "Tidy one small surface", s: "Pick the surface and set a 2-minute timer" },
+    { t: "Book that appointment", s: "Find the phone number or booking page" },
+    { t: "Put something I need by the door", s: "Pick the thing and place it by the door" },
+    { t: "Pay that bill", s: "Open the bill or your banking app" },
+    { t: "Send the email I keep forgetting", s: "Open a new email and add the person's name" },
+    { t: "Step outside for 5 minutes", s: "Stand up and open the door" },
+    { t: "Write down what's in my head", s: "Type the first thing that comes to mind" },
+    { t: "Put a load of laundry on", s: "Carry the basket to the machine" }
+  ];
+
+  var FIRST_STEP_IDEAS = {
+    generic: [
+      "Open it and just look at it for 10 seconds",
+      "Set a 2-minute timer and do the messiest part",
+      "Write or do the very first bit badly on purpose",
+      "Put everything you need in one place",
+      "Tell someone you're about to start",
+      "Stand up, take one breath, then begin"
+    ],
+    contact: [
+      "Open the chat or email and type just the first word",
+      "Find the number and put it on screen",
+      "Write one rough sentence you can fix later"
+    ],
+    money: [
+      "Open the bill or app and just look at the amount",
+      "Find the login and open it, nothing else"
+    ],
+    clean: [
+      "Set a 2-minute timer and clear one surface",
+      "Pick up just the 5 things nearest to you"
+    ],
+    book: [
+      "Open the booking page or find the phone number",
+      "Write down two dates that could work"
+    ],
+    buy: [
+      "Add it to a basket or a shopping note, nothing more",
+      "Search for it once and open the first result"
+    ],
+    write: [
+      "Open a blank page and type only the title",
+      "List 3 messy bullet points, no polish"
+    ]
+  };
+
+  var CATEGORY_PATTERNS = [
+    ["contact", /\b(email|e-mail|reply|message|text|call|phone|ring|dm|whatsapp|respond)\b/i],
+    ["money", /\b(pay|bill|invoice|bank|tax|rent|budget|refund|insurance)\b/i],
+    ["clean", /\b(clean|tidy|laundry|dishes|wash|hoover|vacuum|declutter|bin|trash)\b/i],
+    ["book", /\b(book|appointment|schedule|reserve|dentist|doctor)\b/i],
+    ["buy", /\b(buy|order|pick up|shopping)\b/i],
+    ["write", /\b(write|draft|essay|report|plan|proposal|document|notes)\b/i]
+  ];
+
+  function shuffled(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function pickStarters(n) {
+    var have = {};
+    items.forEach(function (i) { if (i.status === "open") have[i.text] = true; });
+    return shuffled(STARTERS.filter(function (st) { return !have[st.t]; })).slice(0, n);
+  }
+
+  function makeStarterChips(n, afterAdd) {
+    var row = el("div", { class: "starter-row" });
+    pickStarters(n).forEach(function (st) {
+      row.appendChild(el("button", {
+        class: "chip", type: "button", text: st.t, title: "First step: " + st.s,
+        onclick: function () {
+          addItem(st.t, { firstStep: st.s });
+          if (afterAdd) afterAdd();
+          render();
+          showToast("Dropped. It'll come back around, or tap Just start.");
+        }
+      }));
+    });
+    return row;
+  }
+
+  function suggestFirstSteps(item) {
+    var picks = [];
+    CATEGORY_PATTERNS.forEach(function (pair) {
+      if (picks.length < 2 && pair[1].test(item.text)) {
+        picks = picks.concat(shuffled(FIRST_STEP_IDEAS[pair[0]]).slice(0, 2));
+      }
+    });
+    shuffled(FIRST_STEP_IDEAS.generic).forEach(function (g) {
+      if (picks.length < 3 && picks.indexOf(g) === -1) picks.push(g);
+    });
+    return picks.slice(0, 3);
+  }
+
+  document.getElementById("ideasToggle").addEventListener("click", function () {
+    var wrap = document.getElementById("ideasWrap");
+    if (wrap.style.display !== "none") { wrap.style.display = "none"; return; }
+    wrap.innerHTML = "";
+    wrap.appendChild(el("div", { class: "suggest-label", text: "Tap one to drop it. It comes with a tiny first step:" }));
+    wrap.appendChild(makeStarterChips(5, function () { wrap.style.display = "none"; }));
+    wrap.style.display = "block";
   });
 
-  // ---------- gentle nudge notifications ----------
-  // Honest scope: this is a static page with no server/push backend, so
-  // reminders can only fire via the browser Notification API while this
-  // tab/PWA is open (checked periodically). No guilt framing, no streak
-  // pressure — just a low-frequency "still here when you're ready" nudge
-  // if the user hasn't engaged in a while.
+  // ---------- gentle reminders ----------
+  // Honest scope: this is a static site with no push server. Reminders go
+  // through the browser/OS notification system while the app is open, running
+  // in the background, or (installed Chromium apps) woken by periodic background
+  // sync. Nothing is sent off the device.
+  var UNSUPPORTED_MSG = "This browser can't show reminders here. On iPhone or iPad, add FocusDrop to your Home Screen first, then try again.";
   var notifCheckInterval = null;
+
+  function readNum(key) {
+    try { return parseInt(localStorage.getItem(key) || "0", 10) || 0; } catch (e) { return 0; }
+  }
 
   function loadNotifEnabled() {
     try { return localStorage.getItem(NOTIF_KEY) === "1"; } catch (e) { return false; }
@@ -1550,83 +1970,333 @@
     try { localStorage.setItem(NOTIF_KEY, on ? "1" : "0"); } catch (e) { /* best effort */ }
   }
 
-  function renderNotifSwitch() {
-    var sw = document.getElementById("notifSwitch");
-    var sub = document.getElementById("notifSub");
-    var on = loadNotifEnabled();
-    sw.classList.toggle("on", on);
-    if (typeof Notification !== "undefined" && Notification.permission === "denied" && on) {
-      sub.textContent = "Blocked by your browser's notification settings — nothing will fire.";
-    } else {
-      sub.textContent = "Occasional nudge if you haven't opened FocusDrop in a while";
-    }
+  function getRemindHours() {
+    var v = parseInt((function () { try { return localStorage.getItem(REMIND_FREQ_KEY); } catch (e) { return null; } })() || "12", 10);
+    return (v > 0 && v <= 72) ? v : 12;
   }
 
-  function maybeSendNudge() {
-    if (!loadNotifEnabled()) return;
-    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
-    if (document.visibilityState === "visible") return; // don't nudge while they're already here
-    var s = loadStreak();
-    var lastTs = null;
-    try { lastTs = parseInt(localStorage.getItem(NOTIF_KEY + "_last_fired") || "0", 10); } catch (e) { lastTs = 0; }
-    var hoursSinceFire = (Date.now() - (lastTs || 0)) / (1000 * 60 * 60);
-    if (hoursSinceFire < 20) return; // low-frequency, at most ~once a day
-    var today = todayKey();
-    if (s.lastDay === today) return; // already opened it today, no nudge needed
+  function getQuiet() {
+    var q = { start: "21:00", end: "08:00" };
     try {
-      new Notification("FocusDrop", {
-        body: "No pressure — whenever you're ready, it's all still here.",
-        tag: "focusdrop-gentle-nudge"
-      });
-      localStorage.setItem(NOTIF_KEY + "_last_fired", String(Date.now()));
-    } catch (e) { /* best effort */ }
+      var raw = localStorage.getItem(QUIET_KEY);
+      if (raw) {
+        var p = JSON.parse(raw);
+        if (p && /^\d\d:\d\d$/.test(p.start) && /^\d\d:\d\d$/.test(p.end)) q = p;
+      }
+    } catch (e) {}
+    return q;
+  }
+
+  function toMin(hhmm) {
+    var p = hhmm.split(":");
+    return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+  }
+
+  function inQuietHours(q) {
+    var d = new Date();
+    var m = d.getHours() * 60 + d.getMinutes();
+    var s = toMin(q.start), e = toMin(q.end);
+    if (s === e) return false;
+    return s < e ? (m >= s && m < e) : (m >= s || m < e);
+  }
+
+  // last time the person actually used the app (throttled), used to decide
+  // whether a reminder is needed at all
+  var lastTouchWrite = 0;
+  function touchActive() {
+    var now = Date.now();
+    if (now - lastTouchWrite < 30000) return;
+    lastTouchWrite = now;
+    try { localStorage.setItem(ACTIVE_KEY, String(now)); } catch (e) {}
+    scheduleSnapshot();
+  }
+
+  // The service worker can't read localStorage, so a small copy of what it
+  // needs (settings plus open thoughts) is kept in IndexedDB on this device.
+  var snapTimer = null;
+  function scheduleSnapshot() {
+    clearTimeout(snapTimer);
+    snapTimer = setTimeout(writeSnapshot, 800);
+  }
+  function writeSnapshot() {
+    if (!("indexedDB" in window)) return;
+    var snap = {
+      enabled: loadNotifEnabled(),
+      hours: getRemindHours(),
+      quiet: getQuiet(),
+      lastActive: readNum(ACTIVE_KEY),
+      lastFired: readNum(NOTIF_KEY + "_last_fired"),
+      updatedAt: Date.now(),
+      items: items.filter(function (i) { return i.status === "open"; }).slice(0, 60).map(function (i) {
+        return { id: i.id, text: String(i.text).slice(0, 140), firstStep: i.firstStep || null, snoozeUntil: i.snoozeUntil || null };
+      })
+    };
+    try {
+      var req = indexedDB.open("focusdrop-sw", 1);
+      req.onupgradeneeded = function () { req.result.createObjectStore("kv"); };
+      req.onsuccess = function () {
+        try {
+          var tx = req.result.transaction("kv", "readwrite");
+          tx.objectStore("kv").put(snap, "snapshot");
+          tx.oncomplete = function () { req.result.close(); };
+        } catch (e) {}
+      };
+    } catch (e) {}
+  }
+
+  function getReg() {
+    if (swReg) return Promise.resolve(swReg);
+    if (!("serviceWorker" in navigator)) return Promise.resolve(null);
+    return navigator.serviceWorker.getRegistration().then(function (r) { swReg = r || null; return swReg; }).catch(function () { return null; });
+  }
+
+  // `new Notification()` throws on Android Chrome; showNotification through
+  // the service worker is the form that works on phones and desktops.
+  function showNotificationSafe(title, opts) {
+    opts = opts || {};
+    if (!opts.icon) opts.icon = "icons/icon-192.png";
+    if (!opts.badge) opts.badge = "icons/icon-192.png";
+    return getReg().then(function (reg) {
+      if (reg && reg.showNotification) return reg.showNotification(title, opts);
+      new Notification(title, opts);
+    });
+  }
+
+  function buildNudge(force) {
+    var now = Date.now();
+    var pool = items.filter(function (i) {
+      return i.status === "open" && !(i.snoozeUntil && i.snoozeUntil > now);
+    });
+    if (pool.length) {
+      var it = pool[Math.floor(Math.random() * pool.length)];
+      var t = it.text.length > 90 ? it.text.slice(0, 87) + "…" : it.text;
+      return {
+        title: "Still on your mind?",
+        body: "“" + t + "”\n" + (it.firstStep ? "To start: " + it.firstStep : "One tiny step is plenty. No pressure."),
+        itemId: it.id
+      };
+    }
+    if (!force && (now - readNum(NOTIF_KEY + "_last_fired")) / 3600000 < 24) return null;
+    return { title: "FocusDrop", body: "Anything floating around in your head? Drop it here before it slips away.", itemId: null };
+  }
+
+  function maybeSendNudge(force) {
+    if (!force) {
+      if (!loadNotifEnabled()) return;
+      if (document.visibilityState === "visible") return; // don't nudge while they're already here
+    }
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    if (!force) {
+      var now = Date.now();
+      var hrs = getRemindHours();
+      if ((now - readNum(NOTIF_KEY + "_last_fired")) / 3600000 < hrs) return;
+      if ((now - readNum(ACTIVE_KEY)) / 3600000 < hrs) return; // they used it recently
+      if (inQuietHours(getQuiet())) return;
+    }
+    var n = buildNudge(!!force);
+    if (!n) return;
+    return showNotificationSafe(n.title, {
+      body: n.body,
+      tag: "focusdrop-nudge",
+      data: { itemId: n.itemId }
+    }).then(function () {
+      try { localStorage.setItem(NOTIF_KEY + "_last_fired", String(Date.now())); } catch (e) {}
+      scheduleSnapshot();
+    });
   }
 
   function startNotifChecks() {
     if (notifCheckInterval) return;
-    notifCheckInterval = setInterval(maybeSendNudge, 30 * 60 * 1000); // check twice an hour
+    notifCheckInterval = setInterval(function () { maybeSendNudge(); }, 60 * 1000);
   }
 
   function stopNotifChecks() {
     if (notifCheckInterval) { clearInterval(notifCheckInterval); notifCheckInterval = null; }
   }
 
-  document.getElementById("notifSwitch").addEventListener("click", function () {
+  // Chromium installed apps can wake the service worker now and then
+  function syncPeriodicNudge(on) {
+    getReg().then(function (reg) {
+      if (!reg || !reg.periodicSync) return;
+      if (on) return reg.periodicSync.register("focusdrop-nudge", { minInterval: Math.max(getRemindHours(), 6) * 3600 * 1000 });
+      return reg.periodicSync.unregister("focusdrop-nudge");
+    }).catch(function () {});
+  }
+
+  function renderNotifSwitch() {
+    var sw = document.getElementById("notifSwitch");
+    var sub = document.getElementById("notifSub");
+    var on = loadNotifEnabled();
+    sw.classList.toggle("on", on);
+    sw.setAttribute("aria-checked", on ? "true" : "false");
+    if (typeof Notification === "undefined") {
+      sub.textContent = "Not available in this browser. On iPhone or iPad, add FocusDrop to your Home Screen first.";
+    } else if (Notification.permission === "denied") {
+      sub.textContent = "Blocked in your browser's notification settings, so nothing will show.";
+    } else {
+      sub.textContent = "A kind nudge with one of your thoughts. Works best once FocusDrop is installed.";
+    }
+  }
+
+  function initReminderControls() {
+    var sel = document.getElementById("remindFreq");
+    sel.value = String(getRemindHours());
+    if (sel.value === "") sel.value = "12";
+    sel.addEventListener("change", function () {
+      try { localStorage.setItem(REMIND_FREQ_KEY, sel.value); } catch (e) {}
+      scheduleSnapshot();
+      if (loadNotifEnabled()) syncPeriodicNudge(true);
+    });
+    var q = getQuiet();
+    var qs = document.getElementById("quietStart");
+    var qe = document.getElementById("quietEnd");
+    qs.value = q.start;
+    qe.value = q.end;
+    function saveQuiet() {
+      if (!qs.value || !qe.value) return;
+      try { localStorage.setItem(QUIET_KEY, JSON.stringify({ start: qs.value, end: qe.value })); } catch (e) {}
+      scheduleSnapshot();
+    }
+    qs.addEventListener("change", saveQuiet);
+    qe.addEventListener("change", saveQuiet);
+    document.getElementById("testNudgeBtn").addEventListener("click", sendTestNudge);
+  }
+
+  function sendTestNudge() {
+    if (typeof Notification === "undefined") { showToast(UNSUPPORTED_MSG); return; }
+    function fire() {
+      Promise.resolve(maybeSendNudge(true)).then(function () {
+        showToast("Sent. Look for it in your notifications.");
+      }).catch(function () {
+        showToast("Couldn't show a notification here. Check your browser's notification settings.");
+      });
+    }
+    if (Notification.permission === "granted") { fire(); return; }
+    if (Notification.permission === "denied") { showToast("Notifications are blocked in your browser settings."); return; }
+    Notification.requestPermission().then(function (perm) {
+      if (perm === "granted") fire(); else showToast("No problem, reminders stay off.");
+      renderNotifSwitch();
+    });
+  }
+
+  function onNotifSwitch() {
     var turningOn = !loadNotifEnabled();
     if (!turningOn) {
       saveNotifEnabled(false);
       stopNotifChecks();
+      syncPeriodicNudge(false);
+      scheduleSnapshot();
       renderNotifSwitch();
       return;
     }
-    if (typeof Notification === "undefined") {
-      showToast("Notifications aren't supported in this browser.");
-      return;
-    }
-    if (Notification.permission === "granted") {
+    if (typeof Notification === "undefined") { showToast(UNSUPPORTED_MSG); return; }
+    function enable() {
       saveNotifEnabled(true);
       startNotifChecks();
+      syncPeriodicNudge(true);
+      scheduleSnapshot();
       renderNotifSwitch();
       showToast("Gentle reminders on.");
-      return;
     }
+    if (Notification.permission === "granted") { enable(); return; }
     if (Notification.permission === "denied") {
-      saveNotifEnabled(true);
-      renderNotifSwitch();
       showToast("Notifications are blocked in your browser settings.");
+      renderNotifSwitch();
       return;
     }
     Notification.requestPermission().then(function (perm) {
-      if (perm === "granted") {
-        saveNotifEnabled(true);
-        startNotifChecks();
-        showToast("Gentle reminders on.");
-      } else {
-        saveNotifEnabled(false);
-      }
-      renderNotifSwitch();
+      if (perm === "granted") enable(); else { saveNotifEnabled(false); renderNotifSwitch(); }
     });
+  }
+  document.getElementById("notifSwitch").addEventListener("click", onNotifSwitch);
+  document.getElementById("notifSwitch").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onNotifSwitch(); }
   });
+
+  // open the thought a reminder was about
+  function focusItemById(id) {
+    var it = items.find(function (i) { return i.id === id && i.status === "open"; });
+    if (!it) return false;
+    currentSurfaced = it;
+    render();
+    return true;
+  }
+  function applyHashItem() {
+    var m = /[#&]item=([^&]+)/.exec(location.hash || "");
+    if (!m) return;
+    var id = decodeURIComponent(m[1]);
+    var it = items.find(function (i) { return i.id === id && i.status === "open"; });
+    if (it) currentSurfaced = it;
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+  }
+
+  document.addEventListener("pointerdown", touchActive, true);
+  document.addEventListener("keydown", touchActive, true);
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") { touchActive(); tickTimer(); }
+  });
+
+  // ---------- install / add to home screen ----------
+  var deferredInstall = null;
+  function isStandalone() {
+    return (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+  }
+  function detectPlatform() {
+    var ua = navigator.userAgent || "";
+    if (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) return "ios";
+    if (/Android/i.test(ua)) return "android";
+    return "desktop";
+  }
+  function updateInstallUi() {
+    var installed = isStandalone();
+    document.getElementById("installNowBtn").style.display = deferredInstall ? "" : "none";
+    document.getElementById("installIconBtn").style.display = installed ? "none" : "";
+    document.getElementById("installRow").style.display = installed ? "none" : "";
+    var plat = detectPlatform();
+    document.querySelectorAll(".platform-block").forEach(function (b) {
+      b.classList.toggle("current", b.getAttribute("data-platform") === plat);
+    });
+  }
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault();
+    deferredInstall = e;
+    updateInstallUi();
+  });
+  window.addEventListener("appinstalled", function () {
+    deferredInstall = null;
+    updateInstallUi();
+    showToast("Installed. Find FocusDrop on your home screen or in your apps.");
+  });
+  document.getElementById("installNowBtn").addEventListener("click", function () {
+    if (!deferredInstall) return;
+    deferredInstall.prompt();
+    deferredInstall.userChoice.then(function () {
+      deferredInstall = null;
+      updateInstallUi();
+    }).catch(function () {});
+  });
+
+  function registerServiceWorker() {
+    if (!("serviceWorker" in navigator) || !/^https?:$/.test(location.protocol)) return;
+    navigator.serviceWorker.addEventListener("message", function (e) {
+      if (e.data && e.data.type === "focus-item") focusItemById(e.data.id);
+    });
+    navigator.serviceWorker.register("sw.js").then(function (reg) {
+      swReg = reg;
+      if (loadNotifEnabled()) syncPeriodicNudge(true);
+    }).catch(function () { /* offline support is a bonus, never block the app */ });
+  }
+
+  // keep the browser bar colour right when "System" follows the OS
+  try {
+    if (window.matchMedia) {
+      matchMedia("(prefers-color-scheme: light)").addEventListener("change", function () {
+        var mode = "system";
+        try { mode = localStorage.getItem(THEME_KEY) || "system"; } catch (e) {}
+        updateThemeColor(mode);
+      });
+    }
+  } catch (e) {}
 
   // theme
   document.getElementById("themeDark").addEventListener("click", function () { setTheme("dark"); });
@@ -1758,6 +2428,8 @@
             lastSeenAt: it.lastSeenAt || null,
             snoozeUntil: it.snoozeUntil || null,
             seenCount: it.seenCount || 0,
+            firstStep: it.firstStep || null,
+            quick: !!it.quick,
             status: it.status || "open",
             completedAt: it.completedAt,
             droppedAt: it.droppedAt
@@ -1835,11 +2507,20 @@
 
   loadTheme();
   load();
+  applyHashItem();
   render();
   renderNotifSwitch();
+  initReminderControls();
+  updateInstallUi();
+  registerServiceWorker();
   if (loadNotifEnabled() && typeof Notification !== "undefined" && Notification.permission === "granted") {
     startNotifChecks();
   }
+  try {
+    if ((window.matchMedia && matchMedia("(pointer: fine)").matches) || /[?&]action=capture/.test(location.search)) {
+      document.getElementById("captureInput").focus();
+    }
+  } catch (e) {}
 })();
 </script>
 </body>
