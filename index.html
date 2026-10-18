@@ -1019,6 +1019,7 @@
     </p>
     <div class="overlay-actions" style="flex-wrap:wrap;">
       <button class="overlay-btn primary" id="installNowBtn" type="button" style="display:none;">Install now</button>
+      <button class="overlay-btn primary" id="installGuideBtn" type="button" style="display:none;">Show me how to install</button>
       <a class="overlay-btn" id="downloadCopyBtn" href="index.html" download="FocusDrop.html">Download offline copy</a>
     </div>
 
@@ -2250,6 +2251,7 @@
   function updateInstallUi() {
     var installed = isStandalone();
     document.getElementById("installNowBtn").style.display = deferredInstall ? "" : "none";
+    document.getElementById("installGuideBtn").style.display = deferredInstall ? "none" : "";
     document.getElementById("installIconBtn").style.display = installed ? "none" : "";
     document.getElementById("installRow").style.display = installed ? "none" : "";
     var plat = detectPlatform();
@@ -2274,6 +2276,14 @@
       deferredInstall = null;
       updateInstallUi();
     }).catch(function () {});
+  });
+  // iPhone/iPad never fire beforeinstallprompt, so the steps below are the install
+  // path. Open the panel from an install=1 link on the main site, and always give
+  // people a way to see the steps when there is no one-click button.
+  document.getElementById("installGuideBtn").addEventListener("click", function () {
+    document.querySelectorAll(".platform-block").forEach(function (b) { b.style.display = ""; });
+    var first = document.querySelector(".platform-block.current");
+    if (first) { try { first.scrollIntoView({ block: "nearest" }); } catch (e) {} }
   });
 
   function registerServiceWorker() {
@@ -2513,6 +2523,18 @@
   initReminderControls();
   updateInstallUi();
   registerServiceWorker();
+  // A "Download / Get the app" link on jasperfish.com can land here with
+  // ?install=1 and go straight to the right instructions for this device.
+  try {
+    if (/[?&]install=1/.test(location.search) && !isStandalone()) {
+      var cleanInstallLink = location.pathname;
+      var keep = location.search.replace(/[?&]install=1/, "").replace(/^[&?]/, "");
+      if (keep) cleanInstallLink += "?" + keep;
+      try { history.replaceState(null, "", cleanInstallLink); } catch (e) {}
+      updateInstallUi();
+      openOverlay("installBackdrop");
+    }
+  } catch (e) {}
   if (loadNotifEnabled() && typeof Notification !== "undefined" && Notification.permission === "granted") {
     startNotifChecks();
   }
