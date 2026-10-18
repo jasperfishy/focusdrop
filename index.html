@@ -2029,7 +2029,7 @@
       lastFired: readNum(NOTIF_KEY + "_last_fired"),
       updatedAt: Date.now(),
       items: items.filter(function (i) { return i.status === "open"; }).slice(0, 60).map(function (i) {
-        return { id: i.id, text: String(i.text).slice(0, 140), firstStep: i.firstStep || null, snoozeUntil: i.snoozeUntil || null };
+        return { id: i.id, text: String(i.text).slice(0, 140), firstStep: i.firstStep || null, snoozeUntil: i.snoozeUntil || null, lastNotifiedAt: i.lastNotifiedAt || null, createdAt: i.createdAt || null, lastSeenAt: i.lastSeenAt || null };
       })
     };
     try {
@@ -2063,13 +2063,52 @@
     });
   }
 
-  function buildNudge(force) {
+  // Nudge selection. This used to be plain uniform-random with no memory, so
+  // the same thought could resurface repeatedly while others were never
+  // mentioned at all. It now mirrors the age-weighted blend used by the
+  // on-screen card (pickSurfaceItem) and skips anything already nudged in the
+  // last 48 hours — falling back to the full pool rather than going silent.
+  var NUDGE_REPEAT_MS = 48 * 60 * 60 * 1000;
+  var NUDGE_BLEND = 0.7;
+
+  function nudgePool() {
     var now = Date.now();
-    var pool = items.filter(function (i) {
+    return items.filter(function (i) {
       return i.status === "open" && !(i.snoozeUntil && i.snoozeUntil > now);
     });
-    if (pool.length) {
-      var it = pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function pickNudgeItem(pool) {
+    if (!pool || !pool.length) return null;
+    if (pool.length === 1) return pool[0];
+    var now = Date.now();
+    var fresh = pool.filter(function (i) {
+      return !(i.lastNotifiedAt && (now - i.lastNotifiedAt) < NUDGE_REPEAT_MS);
+    });
+    var candidates = fresh.length ? fresh : pool;
+    if (Math.random() > NUDGE_BLEND) {
+      return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+    var weights = candidates.map(function (i) {
+      var since = i.lastNotifiedAt || i.lastSeenAt || i.createdAt;
+      var age = Math.max(daysSince(since), 0);
+      var w = 1 + Math.min(age, 20);
+      if (!i.lastNotifiedAt) w *= 2; // never nudged before gets a boost
+      return w;
+    });
+    var total = weights.reduce(function (a, b) { return a + b; }, 0);
+    var r = Math.random() * total;
+    for (var i = 0; i < candidates.length; i++) {
+      r -= weights[i];
+      if (r <= 0) return candidates[i];
+    }
+    return candidates[candidates.length - 1];
+  }
+
+  function buildNudge(force) {
+    var now = Date.now();
+    var it = pickNudgeItem(nudgePool());
+    if (it) {
       var t = it.text.length > 90 ? it.text.slice(0, 87) + "…" : it.text;
       return {
         title: "Still on your mind?",
@@ -2102,6 +2141,11 @@
       data: { itemId: n.itemId }
     }).then(function () {
       try { localStorage.setItem(NOTIF_KEY + "_last_fired", String(Date.now())); } catch (e) {}
+      if (n.itemId) {
+        var hit = null;
+        for (var i = 0; i < items.length; i++) { if (items[i].id === n.itemId) { hit = items[i]; break; } }
+        if (hit) { hit.lastNotifiedAt = Date.now(); save(); }
+      }
       scheduleSnapshot();
     });
   }
@@ -2533,6 +2577,24 @@
       try { history.replaceState(null, "", cleanInstallLink); } catch (e) {}
       updateInstallUi();
       openOverlay("installBackdrop");
+    }
+  } catch (e) {}
+  // Web Share Target landing: the service worker converts a shared title/text/URL
+  // into a normal load with ?shared=..., so the thought is dropped without the
+  // person having to open the app and type it in.
+  try {
+    var sharedParam = (location.search.match(/[?&]shared=([^&]*)/) || [])[1];
+    if (sharedParam) {
+      var cleanShareLink = location.pathname;
+      var keepShare = location.search.replace(/[?&]shared=[^&]*/, "").replace(/^[&?]/, "");
+      if (keepShare) cleanShareLink += "?" + keepShare;
+      try { history.replaceState(null, "", cleanShareLink); } catch (e) {}
+      var sharedText = decodeURIComponent(sharedParam.replace(/\+/g, " ")).trim().slice(0, 500);
+      if (sharedText) {
+        addItem(sharedText, {});
+        render();
+        showToast("Dropped it in. It'll come back around.");
+      }
     }
   } catch (e) {}
   if (loadNotifEnabled() && typeof Notification !== "undefined" && Notification.permission === "granted") {

@@ -4,7 +4,7 @@
  * - on Chromium installed apps, can wake up now and then (periodic background
  *   sync) to send a gentle nudge. Nothing here talks to a server.
  */
-var VERSION = "focusdrop-v2";
+var VERSION = "focusdrop-v3";
 var CORE = [
   "./",
   "index.html",
@@ -30,11 +30,37 @@ self.addEventListener("activate", function (event) {
   );
 });
 
+// Web Share Target: another app POSTs title/text/url to /share. We turn that
+// into an ordinary page load carrying the text, so the app itself decides what
+// to do with it and no server is involved.
+function handleShare(req) {
+  var target = new URL("./", self.registration.scope);
+  target.searchParams.set("source", "share");
+  return req.formData().then(function (fd) {
+    var bits = [];
+    ["text", "url", "title"].forEach(function (key) {
+      var v = fd.get(key);
+      if (v) bits.push(String(v));
+    });
+    var text = bits.join(" ").replace(/\s+/g, " ").trim().slice(0, 500);
+    if (text) target.searchParams.set("shared", text);
+    return Response.redirect(target.href, 302);
+  }).catch(function () {
+    return Response.redirect(target.href, 302);
+  });
+}
+
 self.addEventListener("fetch", function (event) {
   var req = event.request;
-  if (req.method !== "GET") return;
   var url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+
+  if (req.method === "POST" && /\/share\/?$/.test(url.pathname)) {
+    event.respondWith(handleShare(req));
+    return;
+  }
+
+  if (req.method !== "GET") return;
 
   // Pages: try the network first so updates arrive, but don't make anyone wait
   // more than a moment. Fall back to the cached copy.
@@ -137,6 +163,37 @@ function inQuiet(q) {
   return s < e ? (m >= s && m < e) : (m >= s || m < e);
 }
 
+function pickNudgeItem(pool, now) {
+  if (!pool.length) return null;
+  if (pool.length === 1) return pool[0];
+  var REPEAT_MS = 48 * 60 * 60 * 1000;
+  var fresh = pool.filter(function (it) {
+    return !(it.lastNotifiedAt && (now - it.lastNotifiedAt) < REPEAT_MS);
+  });
+  var candidates = fresh.length ? fresh : pool;
+  if (Math.random() > 0.7) return candidates[Math.floor(Math.random() * candidates.length)];
+  var weights = candidates.map(function (it) {
+    var since = it.lastNotifiedAt || it.lastSeenAt || it.createdAt || now;
+    var age = Math.max((now - since) / 86400000, 0);
+    var w = 1 + Math.min(age, 20);
+    if (!it.lastNotifiedAt) w *= 2;
+    return w;
+  });
+  var total = weights.reduce(function (a, b) { return a + b; }, 0);
+  var r = Math.random() * total;
+  for (var i = 0; i < candidates.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return candidates[i];
+  }
+  return candidates[candidates.length - 1];
+}
+
+function markNotified(snap, id, now) {
+  for (var i = 0; i < (snap.items || []).length; i++) {
+    if (snap.items[i].id === id) { snap.items[i].lastNotifiedAt = now; return; }
+  }
+}
+
 function maybeNudge() {
   return readSnap().then(function (snap) {
     if (!snap || !snap.enabled) return;
@@ -150,8 +207,8 @@ function maybeNudge() {
       for (var i = 0; i < wins.length; i++) { if (wins[i].visibilityState === "visible") return; }
       var pool = (snap.items || []).filter(function (it) { return !(it.snoozeUntil && it.snoozeUntil > now); });
       var title, body, itemId = null;
-      if (pool.length) {
-        var it = pool[Math.floor(Math.random() * pool.length)];
+      var it = pickNudgeItem(pool, now);
+      if (it) {
         var t = it.text.length > 90 ? it.text.slice(0, 87) + "…" : it.text;
         title = "Still on your mind?";
         body = "“" + t + "”\n" + (it.firstStep ? "To start: " + it.firstStep : "One tiny step is plenty. No pressure.");
@@ -162,6 +219,7 @@ function maybeNudge() {
         body = "Anything floating around in your head? Drop it here before it slips away.";
       }
       snap.lastFired = now;
+      if (itemId) markNotified(snap, itemId, now);
       return self.registration.showNotification(title, {
         body: body,
         tag: "focusdrop-nudge",
